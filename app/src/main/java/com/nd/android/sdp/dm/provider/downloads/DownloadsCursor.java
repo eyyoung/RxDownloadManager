@@ -1,12 +1,11 @@
 package com.nd.android.sdp.dm.provider.downloads;
 
-import java.util.Date;
-
 import android.database.Cursor;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.nd.android.sdp.dm.provider.base.AbstractCursor;
+
+import java.util.Date;
 
 /**
  * Cursor wrapper for the {@code downloads} table.

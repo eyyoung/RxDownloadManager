@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.store.DownloadStore;
@@ -72,9 +71,10 @@ public class DownloadService extends Service implements DownloadStore.OnDownload
                 mDownloadStore.cancelDownload(url);
                 break;
             case PAUSE:
+                mDownloadStore.pauseDownload(url);
                 break;
         }
-        return START_STICKY_COMPATIBILITY;
+        return START_NOT_STICKY;
     }
 
     public static void cancel(Context pContext, String pUrl) {
@@ -84,12 +84,20 @@ public class DownloadService extends Service implements DownloadStore.OnDownload
         pContext.startService(starter);
     }
 
+    public static void pause(Context pContext, String pUrl) {
+        Intent starter = new Intent(pContext, DownloadService.class);
+        starter.putExtra(PARAM_URL, pUrl);
+        starter.putExtra(PARAM_OPER, OPER.PAUSE);
+        pContext.startService(starter);
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         mDownloadStore.cancelAll();
         mDownloadStore = null;
         mDownloadStore.unregisterProgressListener(this);
+        mDownloadStore.onDestroy();
     }
 
     @Override
@@ -104,7 +112,6 @@ public class DownloadService extends Service implements DownloadStore.OnDownload
 
     @Override
     public void onProgress(String pUrl, long current, long total) {
-        Log.e("DownloadService", pUrl + " " + current + " " + total);
     }
 
     @Override

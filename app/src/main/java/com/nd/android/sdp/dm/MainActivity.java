@@ -5,16 +5,23 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
+import com.nd.android.sdp.dm.store.DownloadStore;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DownloadStore.OnDownloadLisener {
+
+    private static final String URL1 = "http://apps.pba.cn/apk/Hardware_release.apk";
+    private ProgressBar mPb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mPb = (ProgressBar) findViewById(R.id.pb);
     }
 
     @Override
@@ -41,13 +48,43 @@ public class MainActivity extends AppCompatActivity {
 
     public void onDownload(View view) {
         final DownloadOptions options = new DownloadOptionsBuilder()
-                .fileName("test.exe")
+                .fileName("test.gif")
                 .parentDirPath("/sdcard")
                 .build();
-        DownloadManager.INSTANCE.start(this, "http://org.101.com/v2/app/down?appid=10007&product=new99u_win", options);
+        DownloadManager.INSTANCE.start(this, URL1, options);
+        DownloadManager.INSTANCE.registerDownloadListener(this);
     }
 
     public void onStop(View view) {
-        DownloadManager.INSTANCE.cancel(this, "http://org.101.com/v2/app/down?appid=10007&product=new99u_win");
+        DownloadManager.INSTANCE.cancel(this, URL1);
+    }
+
+    @Override
+    public void onPause(String pUrl) {
+
+    }
+
+    @Override
+    public void onComplete(String pUrl) {
+        if (pUrl.equals(URL1)) {
+            Toast.makeText(this, "Complete", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onProgress(String pUrl, long current, long total) {
+        if (pUrl.equals(URL1)) {
+            mPb.setProgress((int) (current * 100 / total));
+        }
+    }
+
+    @Override
+    public void onCancel(String pUrl) {
+        Toast.makeText(this, "Cancel", Toast.LENGTH_SHORT).show();
+    }
+
+    public void onPause(View view) {
+        DownloadManager.INSTANCE.pause(this, URL1);
+        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show();
     }
 }

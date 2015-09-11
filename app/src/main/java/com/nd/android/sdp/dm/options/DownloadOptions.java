@@ -1,5 +1,7 @@
 package com.nd.android.sdp.dm.options;
 
+import android.support.v4.util.ArrayMap;
+
 import com.nd.android.sdp.dm.downloader.Downloader;
 
 import java.io.Serializable;
@@ -11,7 +13,7 @@ import java.io.Serializable;
  */
 public class DownloadOptions implements Serializable {
 
-    private Object mExtraForDownloader;
+    private ArrayMap<String,String> mExtraForDownloader;
 
     private Class<? extends Downloader> mDownloader;
 
@@ -23,7 +25,7 @@ public class DownloadOptions implements Serializable {
 
     private boolean mNeedNotificationBar;
 
-    public DownloadOptions(Object pExtraForDownloader,
+    public DownloadOptions(ArrayMap<String,String> pExtraForDownloader,
                            Class<? extends Downloader> pDownloader,
                            String pFileName,
                            String pParentDirPath,
@@ -37,7 +39,7 @@ public class DownloadOptions implements Serializable {
         mNeedNotificationBar = pNeedNotificationBar;
     }
 
-    public Object getExtraForDownloader() {
+    public ArrayMap<String,String> getExtraForDownloader() {
         return mExtraForDownloader;
     }
 

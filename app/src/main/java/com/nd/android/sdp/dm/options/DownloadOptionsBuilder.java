@@ -1,9 +1,11 @@
 package com.nd.android.sdp.dm.options;
 
+import android.support.v4.util.ArrayMap;
+
 import com.nd.android.sdp.dm.downloader.Downloader;
 
 public class DownloadOptionsBuilder {
-    private Object mExtraForDownloader = null;
+    private ArrayMap<String,String> mExtraForDownloader = null;
     private Class<? extends Downloader> mDownloader = null;
     private String mParentDirPath;
     private String mModuleName = "sdp_common";
@@ -16,7 +18,7 @@ public class DownloadOptionsBuilder {
      * @param pExtraForDownloader 下载头
      * @return
      */
-    public DownloadOptionsBuilder extraForDownloader(Object pExtraForDownloader) {
+    public DownloadOptionsBuilder extraForDownloader(ArrayMap<String,String> pExtraForDownloader) {
         mExtraForDownloader = pExtraForDownloader;
         return this;
     }

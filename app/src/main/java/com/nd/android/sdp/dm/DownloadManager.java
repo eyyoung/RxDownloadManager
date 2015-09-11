@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.service.DownloadService;
+import com.nd.android.sdp.dm.store.DownloadStore;
 
 /**
  * The Download manager.
@@ -27,6 +28,26 @@ public enum DownloadManager {
     }
 
     /**
+     * 注册下载监听
+     *
+     * @param pLisener the lisener
+     * @author Young
+     */
+    public void registerDownloadListener(DownloadStore.OnDownloadLisener pLisener) {
+        DownloadStore.registerProgressListener(pLisener);
+    }
+
+    /**
+     * 反注册观察者
+     *
+     * @param pLisener the lisener
+     * @author Young
+     */
+    public void unregisterDownloadListener(DownloadStore.OnDownloadLisener pLisener) {
+        DownloadStore.unregisterProgressListener(pLisener);
+    }
+
+    /**
      * 取消下载
      *
      * @param url the url
@@ -42,8 +63,8 @@ public enum DownloadManager {
      * @param url the url
      * @author Young
      */
-    public void pause(String url) {
-
+    public void pause(Context pContext, String url) {
+        DownloadService.pause(pContext, url);
     }
 
 }

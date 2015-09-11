@@ -1,12 +1,9 @@
 package com.nd.android.sdp.dm.provider.base;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
@@ -14,8 +11,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public abstract class BaseContentProvider extends ContentProvider {
     public static final String QUERY_NOTIFY = "QUERY_NOTIFY";
@@ -33,6 +33,7 @@ public abstract class BaseContentProvider extends ContentProvider {
 
 
     protected abstract QueryParams getQueryParams(Uri uri, String selection, String[] projection);
+
     protected abstract boolean hasDebug();
 
     protected abstract SQLiteOpenHelper createSqLiteOpenHelper();
@@ -54,7 +55,8 @@ public abstract class BaseContentProvider extends ContentProvider {
                 // field.setAccessible(true);
                 // field.set(null, true);
             } catch (Throwable t) {
-                if (hasDebug()) Log.w(getClass().getSimpleName(), "Could not enable SQLiteDebug logging", t);
+                if (hasDebug())
+                    Log.w(getClass().getSimpleName(), "Could not enable SQLiteDebug logging", t);
             }
         }
         mSqLiteOpenHelper = createSqLiteOpenHelper();
@@ -68,10 +70,11 @@ public abstract class BaseContentProvider extends ContentProvider {
         long rowId = mSqLiteOpenHelper.getWritableDatabase().insertOrThrow(table, null, values);
         if (rowId == -1) return null;
         String notify;
+        final Uri changeUri = uri.buildUpon().appendEncodedPath(String.valueOf(rowId)).build();
         if (((notify = uri.getQueryParameter(QUERY_NOTIFY)) == null || "true".equals(notify))) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            getContext().getContentResolver().notifyChange(changeUri, null);
         }
-        return uri.buildUpon().appendEncodedPath(String.valueOf(rowId)).build();
+        return changeUri;
     }
 
     @Override
@@ -106,7 +109,13 @@ public abstract class BaseContentProvider extends ContentProvider {
         int res = mSqLiteOpenHelper.getWritableDatabase().update(queryParams.table, values, queryParams.selection, selectionArgs);
         String notify;
         if (res != 0 && ((notify = uri.getQueryParameter(QUERY_NOTIFY)) == null || "true".equals(notify))) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            final Cursor query = query(uri, new String[]{queryParams.idColumn}, selection, selectionArgs, null);
+            query.moveToFirst();
+            do {
+                final int id = query.getInt(0);
+                getContext().getContentResolver().notifyChange(ContentUris.withAppendedId(uri, id), null);
+            } while (query.moveToNext());
+            query.close();
         }
         return res;
     }
@@ -117,7 +126,13 @@ public abstract class BaseContentProvider extends ContentProvider {
         int res = mSqLiteOpenHelper.getWritableDatabase().delete(queryParams.table, queryParams.selection, selectionArgs);
         String notify;
         if (res != 0 && ((notify = uri.getQueryParameter(QUERY_NOTIFY)) == null || "true".equals(notify))) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            final Cursor query = query(uri, new String[]{queryParams.idColumn}, selection, selectionArgs, null);
+            query.moveToFirst();
+            do {
+                final int id = query.getInt(0);
+                getContext().getContentResolver().notifyChange(ContentUris.withAppendedId(uri, id), null);
+            } while (query.moveToNext());
+            query.close();
         }
         return res;
     }

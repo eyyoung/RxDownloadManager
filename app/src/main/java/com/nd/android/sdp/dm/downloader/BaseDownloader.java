@@ -1,12 +1,13 @@
 package com.nd.android.sdp.dm.downloader;
 
+import android.support.v4.util.ArrayMap;
+
 import com.nd.android.okhttp.OkHttpClient;
 import com.nd.android.okhttp.Request;
 import com.nd.android.okhttp.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -19,18 +20,14 @@ public class BaseDownloader implements Downloader {
     private Response mResponse;
 
     @Override
-    public InputStream getStream(String imageUri, Object extra) throws IOException {
-        HashMap<String, String> header = null;
-        if (extra instanceof HashMap) {
-            header = (HashMap<String, String>) extra;
-        }
+    public InputStream getStream(String imageUri, ArrayMap<String,String> extra) throws IOException {
         OkHttpClient client = new OkHttpClient();
         final Request.Builder builder = new Request.Builder().url(imageUri);
-        if (header != null) {
-            final Iterator<String> iterator = header.keySet().iterator();
+        if (extra != null) {
+            final Iterator<String> iterator = extra.keySet().iterator();
             while (iterator.hasNext()) {
                 final String key = iterator.next();
-                builder.addHeader(key, header.get(key));
+                builder.addHeader(key, extra.get(key));
             }
         }
         final Request request = builder.build();

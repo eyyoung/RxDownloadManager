@@ -1,23 +1,21 @@
 package com.nd.android.sdp.dm.provider;
 
-import java.util.Arrays;
-
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.nd.android.sdp.dm.BuildConfig;
 import com.nd.android.sdp.dm.provider.base.BaseContentProvider;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
+
+import java.util.Arrays;
 
 public class DownloadProvider extends BaseContentProvider {
     private static final String TAG = DownloadProvider.class.getSimpleName();
 
-    private static final boolean DEBUG = BuildConfig.DEBUG;
+    private static final boolean DEBUG = false;
 
     private static final String TYPE_CURSOR_ITEM = "vnd.android.cursor.item/";
     private static final String TYPE_CURSOR_DIR = "vnd.android.cursor.dir/";
