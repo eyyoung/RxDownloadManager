@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
-    package="com.nd.android.sdp.dm"
+    package="com.nd.android.sdp.dm.demo"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -11,15 +11,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
-        <service android:name=".service.DownloadService"/>
-
-        <provider
-            android:name=".provider.DownloadProvider"
-            android:authorities="com.nd.android.sdp.dm.provider"
-            android:exported="false"/>
-
         <activity
-            android:name=".MainActivity"
+            android:name="com.nd.android.sdp.dm.demo.MainActivity"
             android:label="@string/title_activity_main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

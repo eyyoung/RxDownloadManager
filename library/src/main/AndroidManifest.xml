@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.nd.android.sdp.dm">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application android:allowBackup="true">
+        <service
+            android:name=".service.DownloadService"
+            android:process=":sdp_download" />
+
+        <provider
+            android:name=".provider.DownloadProvider"
+            android:authorities="com.nd.android.sdp.dm"
+            android:exported="false" />
+
+    </application>
+
+</manifest>
