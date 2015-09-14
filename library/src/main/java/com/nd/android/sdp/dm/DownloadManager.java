@@ -1,9 +1,12 @@
 package com.nd.android.sdp.dm;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.v4.util.ArrayMap;
 
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
+import com.nd.android.sdp.dm.pojo.DownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsSelection;
@@ -117,4 +120,30 @@ public enum DownloadManager {
         }
         return null;
     }
+
+    /**
+     * 根据URL获取下载信息
+     *
+     * @param pContext
+     * @param url
+     * @return
+     */
+    @NonNull
+    public ArrayMap<String, DownloadInfo> getDownloadInfos(Context pContext, String... url) {
+        DownloadsSelection downloadsSelection = new DownloadsSelection();
+        downloadsSelection.urlContains(url);
+        downloadsSelection.orderById(true);
+        ArrayMap<String, DownloadInfo> downloadInfos = new ArrayMap<>();
+        final DownloadsCursor cursor = downloadsSelection.query(pContext, DownloadsColumns.ALL_COLUMNS);
+        if (cursor.getCount() == 0) {
+            return downloadInfos;
+        }
+        while (cursor.moveToNext()) {
+            DownloadInfo downloadInfo = new DownloadInfo(cursor);
+            downloadInfos.put(cursor.getUrl(), downloadInfo);
+        }
+        cursor.close();
+        return downloadInfos;
+    }
+
 }

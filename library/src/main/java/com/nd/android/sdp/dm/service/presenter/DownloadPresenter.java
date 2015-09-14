@@ -11,6 +11,7 @@ import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
+import com.nd.android.sdp.dm.pojo.DownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsContentValues;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
@@ -126,7 +127,7 @@ public class DownloadPresenter {
         }
         final Subscription subscription = getTaskStream(pUrl, md5, pDownloadOptions)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<DownloadInfoInner>() {
+                .subscribe(new Subscriber<DownloadInfo>() {
 
                     @Override
                     public void onStart() {
@@ -144,7 +145,7 @@ public class DownloadPresenter {
                     }
 
                     @Override
-                    public void onNext(DownloadInfoInner downloadInfoInner) {
+                    public void onNext(DownloadInfo downloadInfoInner) {
 
                     }
                 });
@@ -156,7 +157,7 @@ public class DownloadPresenter {
      *
      * @author Young
      */
-    public Observable<DownloadInfoInner> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
+    public Observable<DownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
         return Observable
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions.getModuleName()))
@@ -175,7 +176,7 @@ public class DownloadPresenter {
      * @return
      */
     @NonNull
-    private Func1<DownloadInfoInner, DownloadInfoInner> writeStateToDb(@NonNull DownloadOptions pDownloadOptions) {
+    private Func1<DownloadInfo, DownloadInfo> writeStateToDb(@NonNull DownloadOptions pDownloadOptions) {
         return downloadInfoInner -> {
             insertOrUpdate(downloadInfoInner.url,
                     downloadInfoInner.filePath,
@@ -243,11 +244,11 @@ public class DownloadPresenter {
      * @return
      */
     @NonNull
-    private Observable<DownloadInfoInner> getDownloadInfoStream(@NonNull final String pUrl,
+    private Observable<DownloadInfo> getDownloadInfoStream(@NonNull final String pUrl,
                                                                 @NonNull final DownloadOptions pDownloadOptions) {
-        return Observable.create(new Observable.OnSubscribe<DownloadInfoInner>() {
+        return Observable.create(new Observable.OnSubscribe<DownloadInfo>() {
             @Override
-            public void call(final Subscriber<? super DownloadInfoInner> pSubscriber) {
+            public void call(final Subscriber<? super DownloadInfo> pSubscriber) {
                 // 写到数据库
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                 // md5如果相同的话不会走到这里
@@ -266,7 +267,7 @@ public class DownloadPresenter {
                 }
                 // 添加任务
                 {
-                    DownloadInfoInner downloadInfoInner = new DownloadInfoInner(pUrl,
+                    DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
                             State.DOWNLOADING,
                             null,
                             filePath,
@@ -287,7 +288,7 @@ public class DownloadPresenter {
                         loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, (current, total) -> {
                             final boolean isCanceled = pSubscriber.isUnsubscribed();
                             if (!isCanceled) {
-                                DownloadInfoInner downloadInfoInner = new DownloadInfoInner(pUrl,
+                                DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
                                         State.DOWNLOADING,
                                         null,
                                         filePath,
@@ -306,7 +307,7 @@ public class DownloadPresenter {
                                 // 计算失败并不影响下载
                                 e.printStackTrace();
                             }
-                            DownloadInfoInner downloadInfoInner = new DownloadInfoInner(pUrl,
+                            DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
                                     State.FINISHED,
                                     fileMd5,
                                     filePath,
@@ -374,30 +375,6 @@ public class DownloadPresenter {
                 subscription.unsubscribe();
             }
         }
-    }
-
-    private class DownloadInfoInner {
-        String url;
-        State state;
-        long currentSize;
-        String filePath;
-        long totalSize;
-        String md5;
-
-        public DownloadInfoInner(String url,
-                                 State state,
-                                 String md5,
-                                 String pFilePath,
-                                 long currentSize,
-                                 long totalSize) {
-            this.url = url;
-            this.state = state;
-            this.currentSize = currentSize;
-            this.md5 = md5;
-            this.filePath = pFilePath;
-            this.totalSize = totalSize;
-        }
-
     }
 
     public void onDestroy() {

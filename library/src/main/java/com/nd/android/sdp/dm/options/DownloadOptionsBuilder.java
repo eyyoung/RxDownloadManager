@@ -79,6 +79,13 @@ public class DownloadOptionsBuilder {
         return this;
     }
 
+    /**
+     * 任务栏打开操作<br/>
+     * 需要与com.nd.android.sdp.dm.options.DownloadOptionsBuilder#needNotificationBar(boolean)搭配使用
+     *
+     * @param pOpenAction
+     * @return
+     */
     public DownloadOptionsBuilder openAction(OpenAction pOpenAction) {
         mOpenAction = pOpenAction;
         return this;

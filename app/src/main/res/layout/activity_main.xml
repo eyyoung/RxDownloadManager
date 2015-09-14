@@ -39,6 +39,12 @@
         android:onClick="onPause"
         android:text="暂停" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="getInfo"
+        android:text="获取下载信息" />
+
     <ProgressBar
         android:id="@+id/pb"
         style="?android:attr/progressBarStyleHorizontal"

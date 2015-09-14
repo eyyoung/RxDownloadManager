@@ -97,9 +97,11 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 break;
             case OPEN:
                 final OpenAction openAction = (OpenAction) intent.getSerializableExtra(PARAM_OPEN_ACTION);
+                if (openAction == null) {
+                    break;
+                }
                 final DownloadsCursor query = mDownloadPresenter.query(url);
                 query.moveToFirst();
-                openAction.open(this, query.getFilepath());
                 query.close();
                 cancelNotify(url);
                 break;
@@ -112,7 +114,9 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         mDownloadPresenter.addTask(url, md5, downloadOptions);
         if (downloadOptions.isNeedNotificationBar()) {
             makeNotification(downloadOptions.getFileName(), url);
-            mOpenActionArrayMap.put(url, downloadOptions.getOpenAction());
+            if (downloadOptions.getOpenAction() != null) {
+                mOpenActionArrayMap.put(url, downloadOptions.getOpenAction());
+            }
         }
     }
 

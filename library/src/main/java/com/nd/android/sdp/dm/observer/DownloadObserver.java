@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 
+import com.nd.android.sdp.dm.pojo.DownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.state.State;
@@ -32,7 +33,7 @@ public enum DownloadObserver {
     protected ContentResolver mContentResolver;
 
     final private Set<OnDownloadLisener> mProgressAction = new HashSet<>();
-    final private ArrayMap<String, PublishSubject<DownloadInfoInner>> mSubjectMap = new ArrayMap<>();
+    final private ArrayMap<String, PublishSubject<DownloadInfo>> mSubjectMap = new ArrayMap<>();
 
     public void init(ContentResolver pContentResolver) {
         mContentResolver = pContentResolver;
@@ -50,9 +51,9 @@ public enum DownloadObserver {
                 return;
             }
             downloadsCursor.moveToFirst();
-            DownloadInfoInner downloadInfoInner = new DownloadInfoInner(downloadsCursor);
+            DownloadInfo downloadInfoInner = new DownloadInfo(downloadsCursor);
             String url = downloadsCursor.getUrl();
-            PublishSubject<DownloadInfoInner> subject = mSubjectMap.get(url);
+            PublishSubject<DownloadInfo> subject = mSubjectMap.get(url);
             // 缓存中不存在
             if (subject == null) {
                 subject = subscribeDownloadListener();
@@ -69,29 +70,29 @@ public enum DownloadObserver {
     };
 
     @NonNull
-    private PublishSubject<DownloadInfoInner> subscribeDownloadListener() {
-        final PublishSubject<DownloadInfoInner> subject = PublishSubject.create();
+    private PublishSubject<DownloadInfo> subscribeDownloadListener() {
+        final PublishSubject<DownloadInfo> subject = PublishSubject.create();
         subject
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(pDownloadInfoInner -> {
+                .subscribe(pDownloadInfo -> {
                     for (OnDownloadLisener pAction : mProgressAction) {
-                        switch (pDownloadInfoInner.state) {
+                        switch (pDownloadInfo.state) {
                             case DOWNLOADING:
-                                if (pDownloadInfoInner.totalSize > 0 && pDownloadInfoInner.currentSize > 0) {
-                                    pAction.onProgress(pDownloadInfoInner.url,
-                                            pDownloadInfoInner.currentSize,
-                                            pDownloadInfoInner.totalSize);
+                                if (pDownloadInfo.totalSize > 0 && pDownloadInfo.currentSize > 0) {
+                                    pAction.onProgress(pDownloadInfo.url,
+                                            pDownloadInfo.currentSize,
+                                            pDownloadInfo.totalSize);
                                 }
                                 break;
                             case PAUSING:
-                                pAction.onPause(pDownloadInfoInner.url);
+                                pAction.onPause(pDownloadInfo.url);
                                 break;
                             case CANCEL:
-                                pAction.onCancel(pDownloadInfoInner.url);
+                                pAction.onCancel(pDownloadInfo.url);
                                 break;
                             case FINISHED:
-                                pAction.onComplete(pDownloadInfoInner.url);
+                                pAction.onComplete(pDownloadInfo.url);
                                 break;
                         }
                     }
@@ -129,24 +130,6 @@ public enum DownloadObserver {
      */
     public void unregisterProgressListener(OnDownloadLisener pLisener) {
         mProgressAction.remove(pLisener);
-    }
-
-    private class DownloadInfoInner {
-        String url;
-        State state;
-        long currentSize;
-        String filePath;
-        long totalSize;
-        String md5;
-
-        public DownloadInfoInner(DownloadsCursor pDownloadsCursor) {
-            url = pDownloadsCursor.getUrl();
-            filePath = pDownloadsCursor.getFilepath();
-            state = State.fromInt(pDownloadsCursor.getState());
-            currentSize = pDownloadsCursor.getCurrentSize();
-            totalSize = pDownloadsCursor.getTotalSize();
-            md5 = pDownloadsCursor.getMd5();
-        }
     }
 
 }

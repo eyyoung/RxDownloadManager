@@ -1,6 +1,7 @@
 package com.nd.android.sdp.dm.demo;
 
 import android.os.Bundle;
+import android.support.v4.util.ArrayMap;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -13,6 +14,7 @@ import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
+import com.nd.android.sdp.dm.pojo.DownloadInfo;
 
 import java.io.File;
 
@@ -121,5 +123,10 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
     protected void onDestroy() {
         super.onDestroy();
         DownloadManager.INSTANCE.unregisterDownloadListener(this);
+    }
+
+    public void getInfo(View view) {
+        final ArrayMap<String, DownloadInfo> downloadInfos = DownloadManager.INSTANCE.getDownloadInfos(this, URL1, URL2);
+        Toast.makeText(this, downloadInfos.get(URL1).filePath, Toast.LENGTH_SHORT).show();
     }
 }
