@@ -14,7 +14,11 @@ import android.support.v4.util.ArrayMap;
 import com.nd.android.sdp.dm.R;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
+import com.nd.android.sdp.dm.options.OpenAction;
+import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.service.presenter.DownloadPresenter;
+
+import java.io.File;
 
 
 /**
@@ -32,11 +36,13 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     private DownloadPresenter mDownloadPresenter;
     private NotificationManager mNotifyManager;
     private final ArrayMap<String, NotificationCompat.Builder> mNotificationHashMap = new ArrayMap<>();
+    private final ArrayMap<String, OpenAction> mOpenActionArrayMap = new ArrayMap<>();
 
     private enum OPER {
         START,
         CANCEL,
-        PAUSE
+        PAUSE,
+        OPEN
     }
 
     @Override
@@ -47,18 +53,6 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         DownloadObserver.INSTANCE.registerProgressListener(this);
         mNotifyManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-    }
-
-    /**
-     * 启动一次服务
-     *
-     * @param context          the context
-     * @param pUrl             the p url
-     * @param pDownloadOptions the p download options
-     * @author Young
-     */
-    public static void start(Context context, String pUrl, DownloadOptions pDownloadOptions) {
-        start(context, pUrl, null, pDownloadOptions);
     }
 
     /**
@@ -88,10 +82,10 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String url = intent.getStringExtra(PARAM_URL);
-        DownloadOptions downloadOptions = (DownloadOptions) intent.getSerializableExtra(PARAM_OPTIONS);
         OPER oper = (OPER) intent.getSerializableExtra(PARAM_OPER);
         switch (oper) {
             case START:
+                DownloadOptions downloadOptions = (DownloadOptions) intent.getSerializableExtra(PARAM_OPTIONS);
                 startTask(intent, url, downloadOptions);
                 break;
             case CANCEL:
@@ -99,6 +93,8 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 break;
             case PAUSE:
                 mDownloadPresenter.pauseDownload(url);
+                break;
+            case OPEN:
                 break;
         }
         return START_NOT_STICKY;
@@ -113,10 +109,14 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     }
 
     private void makeNotification(String pFileName, String pUrl) {
-        Intent dismissIntent = new Intent(this, DownloadService.class);
-        dismissIntent.putExtra(PARAM_URL, pUrl);
-        dismissIntent.putExtra(PARAM_OPER, OPER.CANCEL);
-        PendingIntent piCancel = PendingIntent.getService(this, 0, dismissIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        Intent cancelIntent = new Intent(this, DownloadService.class);
+        cancelIntent.putExtra(PARAM_URL, pUrl);
+        cancelIntent.putExtra(PARAM_OPER, OPER.CANCEL);
+        PendingIntent piCancel = PendingIntent.getService(this, 0, cancelIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        Intent pauseIntent = new Intent(this, DownloadService.class);
+        pauseIntent.putExtra(PARAM_URL, pUrl);
+        pauseIntent.putExtra(PARAM_OPER, OPER.PAUSE);
+        PendingIntent piPause = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.downloadmanager_ic_download_noti)
@@ -124,8 +124,10 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                         .setProgress(100, 0, false)
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(getString(R.string.downloadmanager_downloading, pFileName)))
-                        .addAction(R.drawable.downloadmanager_ic_download_noti,
-                                getString(R.string.downloadmanager_cancel), piCancel);
+                        .addAction(R.drawable.downloadmanager_ic_block,
+                                getString(R.string.downloadmanager_cancel), piCancel)
+                        .addAction(R.drawable.downloadmanager_ic_pause,
+                                getString(R.string.downloadmanager_pause), piPause);
         Notification notification = builder.build();
         mNotifyManager.notify(pUrl.hashCode(), notification);
         mNotificationHashMap.put(pUrl, builder);
@@ -148,16 +150,18 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mDownloadPresenter.cancelAll();
+        mDownloadPresenter.pauseAll();
         mDownloadPresenter.onDestroy();
         mDownloadPresenter = null;
         DownloadObserver.INSTANCE.unregisterProgressListener(this);
         mNotificationHashMap.clear();
+        mOpenActionArrayMap.clear();
     }
 
     @Override
     public void onPause(String pUrl) {
         cancelNotify(pUrl);
+        mOpenActionArrayMap.remove(pUrl);
     }
 
     private void cancelNotify(String pUrl) {
@@ -168,6 +172,22 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     @Override
     public void onComplete(String pUrl) {
         cancelNotify(pUrl);
+        final DownloadsCursor query = mDownloadPresenter.query(pUrl);
+        query.moveToFirst();
+        File file = new File(query.getFilepath());
+        Intent openIntent = new Intent(this, DownloadService.class);
+        openIntent.putExtra(PARAM_URL, pUrl);
+        openIntent.putExtra(PARAM_OPER, OPER.OPEN);
+        PendingIntent piOpen = PendingIntent.getService(this, 3, openIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.downloadmanager_ic_download_noti)
+                        .setContentIntent(piOpen)
+                        .setContentTitle(getString(R.string.downloadmanager_download_complete_title, file.getName()))
+                        .setContentText(getString(R.string.downloadmanager_download_complete_content, file.getAbsolutePath()));
+        Notification notification = builder.build();
+        mNotifyManager.notify(pUrl.hashCode(), notification);
+        query.close();
     }
 
     @Override
@@ -179,12 +199,13 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
             } else {
                 builder.setProgress(0, 0, true);
             }
+            mNotifyManager.notify(pUrl.hashCode(), builder.build());
         }
-        mNotifyManager.notify(pUrl.hashCode(), builder.build());
     }
 
     @Override
     public void onCancel(String pUrl) {
         cancelNotify(pUrl);
+        mOpenActionArrayMap.remove(pUrl);
     }
 }

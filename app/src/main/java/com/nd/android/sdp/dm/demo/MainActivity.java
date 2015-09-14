@@ -2,6 +2,7 @@ package com.nd.android.sdp.dm.demo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     public void onDownload(View view) {
         final DownloadOptions options = new DownloadOptionsBuilder()
-                .fileName("test.gif")
+                .fileName("test.apk")
                 .parentDirPath("/sdcard")
                 .needNotificationBar(true)
                 .build();
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         if (pUrl.equals(URL1)) {
             mPb.setProgress((int) (current * 100 / total));
         }
+        Log.d("MainActivity", (current + " " + total));
     }
 
     @Override
@@ -99,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     public void onRepeatMd5(View view) {
         final DownloadOptions options = new DownloadOptionsBuilder()
-                .fileName("test2.gif")
+                .fileName("test2.apk")
                 .parentDirPath("/sdcard")
                 .build();
         DownloadManager.INSTANCE.start(this, URL2, "d41d8cd98f00b204e9800998ecf8427e", options);

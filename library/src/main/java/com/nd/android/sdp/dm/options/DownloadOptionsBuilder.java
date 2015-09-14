@@ -5,12 +5,13 @@ import android.support.v4.util.ArrayMap;
 import com.nd.android.sdp.dm.downloader.Downloader;
 
 public class DownloadOptionsBuilder {
-    private ArrayMap<String,String> mExtraForDownloader = null;
+    private ArrayMap<String, String> mExtraForDownloader = null;
     private Class<? extends Downloader> mDownloader = null;
     private String mParentDirPath;
     private String mModuleName = "sdp_common";
     private boolean mNeedNotificationBar = false;
     private String mFileName;
+    private OpenAction mOpenAction;
 
     /**
      * 下载头
@@ -18,7 +19,7 @@ public class DownloadOptionsBuilder {
      * @param pExtraForDownloader 下载头
      * @return
      */
-    public DownloadOptionsBuilder extraForDownloader(ArrayMap<String,String> pExtraForDownloader) {
+    public DownloadOptionsBuilder extraForDownloader(ArrayMap<String, String> pExtraForDownloader) {
         mExtraForDownloader = pExtraForDownloader;
         return this;
     }
@@ -78,7 +79,18 @@ public class DownloadOptionsBuilder {
         return this;
     }
 
+    public DownloadOptionsBuilder openAction(OpenAction pOpenAction) {
+        mOpenAction = pOpenAction;
+        return this;
+    }
+
     public DownloadOptions build() {
-        return new DownloadOptions(mExtraForDownloader, mDownloader, mFileName, mParentDirPath, mModuleName, mNeedNotificationBar);
+        return new DownloadOptions(mExtraForDownloader,
+                mDownloader,
+                mFileName,
+                mParentDirPath,
+                mModuleName,
+                mOpenAction,
+                mNeedNotificationBar);
     }
 }

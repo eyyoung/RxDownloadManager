@@ -7,8 +7,7 @@
 
     <application android:allowBackup="true">
         <service
-            android:name=".service.DownloadService"
-            android:process=":sdp_download" />
+            android:name=".service.DownloadService" />
 
         <provider
             android:name=".provider.DownloadProvider"

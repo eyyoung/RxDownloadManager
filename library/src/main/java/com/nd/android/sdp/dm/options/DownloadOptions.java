@@ -15,7 +15,7 @@ public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
 
-    private ArrayMap<String,String> mExtraForDownloader;
+    private ArrayMap<String, String> mExtraForDownloader;
 
     private Class<? extends Downloader> mDownloader;
 
@@ -29,21 +29,25 @@ public class DownloadOptions implements Serializable {
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
 
-    public DownloadOptions(ArrayMap<String,String> pExtraForDownloader,
+    private OpenAction mOpenAction;
+
+    public DownloadOptions(ArrayMap<String, String> pExtraForDownloader,
                            Class<? extends Downloader> pDownloader,
                            String pFileName,
                            String pParentDirPath,
                            String pModuleName,
+                           OpenAction pOpenAction,
                            boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
         mParentDirPath = pParentDirPath;
         mModuleName = pModuleName;
+        mOpenAction = pOpenAction;
         mNeedNotificationBar = pNeedNotificationBar;
     }
 
-    public ArrayMap<String,String> getExtraForDownloader() {
+    public ArrayMap<String, String> getExtraForDownloader() {
         return mExtraForDownloader;
     }
 
@@ -65,6 +69,10 @@ public class DownloadOptions implements Serializable {
 
     public boolean isNeedNotificationBar() {
         return mNeedNotificationBar;
+    }
+
+    public OpenAction getOpenAction() {
+        return mOpenAction;
     }
 
     public ConflictStragedy getConflictStragedy() {

@@ -3,5 +3,8 @@
 
     <string name="downloadmanager_downloading">正在下载%s...</string>
     <string name="downloadmanager_cancel">取消</string>
+    <string name="downloadmanager_pause">暂停</string>
+    <string name="downloadmanager_download_complete_title">%s下载完成</string>
+    <string name="downloadmanager_download_complete_content">已保存至%s</string>
 
 </resources>

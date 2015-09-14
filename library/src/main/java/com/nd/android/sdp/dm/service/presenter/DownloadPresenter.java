@@ -19,9 +19,7 @@ import com.nd.android.sdp.dm.state.State;
 import com.nd.android.sdp.dm.utils.IoUtils;
 import com.nd.android.sdp.dm.utils.MD5Utils;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
@@ -48,13 +46,13 @@ public class DownloadPresenter {
     final private Map<String, Subscription> mUriSubscriptionMap = new HashMap<>();
 
     public static final Class<? extends Downloader> DEFAULT_DOWNLOADER = BaseDownloader.class;
-    public static final int DEFAULT_BUFFER_SIZE = 1024 * 50;
+    public static final int DEFAULT_BUFFER_SIZE = 1024 * 100;
 
     public DownloadPresenter(ContentResolver pContentResolver) {
         mContentResolver = pContentResolver;
     }
 
-    private DownloadsCursor query(String url) {
+    public DownloadsCursor query(String url) {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.url(url);
         downloadsSelection.orderById(true);
@@ -114,9 +112,10 @@ public class DownloadPresenter {
     /**
      * 添加任务
      *
-     * @param pUrl             the p url
-     * @param md5
-     * @param pDownloadOptions the p download options  @author Young
+     * @param pUrl             下载地址
+     * @param md5              文件md5(用于秒下)
+     * @param pDownloadOptions the download options
+     * @author Young
      */
     public void addTask(@NonNull final String pUrl, String md5, @NonNull final DownloadOptions pDownloadOptions) {
         final Subscription cachedSubscription = mUriSubscriptionMap.get(pUrl);
@@ -159,7 +158,7 @@ public class DownloadPresenter {
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions.getModuleName()))
                 .flatMap(s -> getDownloadInfoStream(pUrl, pDownloadOptions))
-                .buffer(250, TimeUnit.MILLISECONDS)
+                .buffer(1000, TimeUnit.MILLISECONDS)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
                 .map(writeStateToDb(pDownloadOptions));
     }
@@ -258,7 +257,7 @@ public class DownloadPresenter {
                     if (extraForDownloader == null) {
                         extraForDownloader = new ArrayMap<>();
                     }
-                    extraForDownloader.put("Ranges", "bytes=" + currentSize + "-");
+                    extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
                 }
                 // 添加任务
                 {
@@ -280,24 +279,19 @@ public class DownloadPresenter {
                     final InputStream downloaderStream = downloader.getStream(pUrl, extraForDownloader);
                     boolean loaded = false;
                     try {
-                        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(tmpFile), DEFAULT_BUFFER_SIZE);
-                        try {
-                            loaded = IoUtils.copyStream(downloaderStream, os, (current, total) -> {
-                                final boolean isCanceled = pSubscriber.isUnsubscribed();
-                                if (!isCanceled) {
-                                    DownloadInfoInner downloadInfoInner = new DownloadInfoInner(pUrl,
-                                            State.DOWNLOADING,
-                                            null,
-                                            filePath,
-                                            current,
-                                            downloader.getContentLength());
-                                    pSubscriber.onNext(downloadInfoInner);
-                                }
-                                return !isCanceled;
-                            }, DEFAULT_BUFFER_SIZE);
-                        } finally {
-                            IoUtils.closeSilently(os);
-                        }
+                        loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, (current, total) -> {
+                            final boolean isCanceled = pSubscriber.isUnsubscribed();
+                            if (!isCanceled) {
+                                DownloadInfoInner downloadInfoInner = new DownloadInfoInner(pUrl,
+                                        State.DOWNLOADING,
+                                        null,
+                                        filePath,
+                                        current,
+                                        total);
+                                pSubscriber.onNext(downloadInfoInner);
+                            }
+                            return !isCanceled;
+                        }, DEFAULT_BUFFER_SIZE, currentSize, downloader.getContentLength());
                     } finally {
                         if (loaded && tmpFile.renameTo(downloadFile)) {
                             String fileMd5 = null;
@@ -311,8 +305,8 @@ public class DownloadPresenter {
                                     State.FINISHED,
                                     fileMd5,
                                     filePath,
-                                    downloader.getContentLength(),
-                                    downloader.getContentLength());
+                                    currentSize + downloader.getContentLength(),
+                                    currentSize + downloader.getContentLength());
                             pSubscriber.onNext(downloadInfoInner);
                         }
                     }
@@ -331,6 +325,11 @@ public class DownloadPresenter {
         });
     }
 
+    /**
+     * 暂停下载
+     *
+     * @param pUrl
+     */
     public void pauseDownload(String pUrl) {
         final Subscription cacheSubscriber = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !cacheSubscriber.isUnsubscribed()) {
@@ -339,6 +338,11 @@ public class DownloadPresenter {
         }
     }
 
+    /**
+     * 取消下载（删除临时文件）
+     *
+     * @param pUrl
+     */
     public void cancelDownload(String pUrl) {
         final Subscription cacheSubscriber = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !cacheSubscriber.isUnsubscribed()) {
@@ -349,10 +353,15 @@ public class DownloadPresenter {
             final File file = new File(query.getFilepath());
             query.close();
             file.delete();
+            final File tmpFile = new File(file.getAbsolutePath() + ".tmp");
+            tmpFile.delete();
         }
     }
 
-    public void cancelAll() {
+    /**
+     * 取消所有任务
+     */
+    public void pauseAll() {
         final Iterator<String> iterator = mUriSubscriptionMap.keySet().iterator();
         while (iterator.hasNext()) {
             final Subscription subscription = mUriSubscriptionMap.get(iterator.next());
@@ -387,7 +396,7 @@ public class DownloadPresenter {
     }
 
     public void onDestroy() {
-        cancelAll();
+        pauseAll();
     }
 
 }
