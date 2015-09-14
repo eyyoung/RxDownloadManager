@@ -94,7 +94,7 @@ public enum DownloadManager {
      * 根据md5获取已经下载的文件
      *
      * @param pContext pContext
-     * @param pMd5
+     * @param pMd5     Md5
      * @return 返回空为无此md5文件
      */
     public File getDownloadedFile(Context pContext, String pMd5) {

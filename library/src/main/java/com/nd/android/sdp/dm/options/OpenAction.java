@@ -1,11 +1,15 @@
 package com.nd.android.sdp.dm.options;
 
+import android.content.Context;
+
+import java.io.Serializable;
+
 /**
  * 打开操作接口
  *
  * @author Young
  */
-public interface OpenAction {
+public interface OpenAction extends Serializable {
 
     /**
      * 打开操作
@@ -13,6 +17,6 @@ public interface OpenAction {
      * @param filePath the file path
      * @author Young
      */
-    void open(String filePath);
+    void open(Context pContext, String filePath);
 
 }

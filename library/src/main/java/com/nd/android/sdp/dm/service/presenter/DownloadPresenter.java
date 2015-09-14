@@ -41,6 +41,7 @@ import rx.schedulers.Schedulers;
  */
 public class DownloadPresenter {
 
+    private static final int DOWNLOAD_TIMEOUT = 20;
     final protected ContentResolver mContentResolver;
 
     final private Map<String, Subscription> mUriSubscriptionMap = new HashMap<>();
@@ -138,6 +139,8 @@ public class DownloadPresenter {
 
                     @Override
                     public void onError(Throwable e) {
+                        cancelDownload(pUrl);
+                        e.printStackTrace();
                     }
 
                     @Override
@@ -159,7 +162,9 @@ public class DownloadPresenter {
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions.getModuleName()))
                 .flatMap(s -> getDownloadInfoStream(pUrl, pDownloadOptions))
                 .buffer(1000, TimeUnit.MILLISECONDS)
+                .filter(downloadInfoInners -> downloadInfoInners != null && downloadInfoInners.size() > 0)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
+                .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
                 .map(writeStateToDb(pDownloadOptions));
     }
 

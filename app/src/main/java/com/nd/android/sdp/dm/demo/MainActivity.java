@@ -58,6 +58,10 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         final DownloadOptions options = new DownloadOptionsBuilder()
                 .fileName("test.apk")
                 .parentDirPath("/sdcard")
+                .openAction((pContext, filePath) -> {
+                    File file = new File(filePath);
+                    Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                })
                 .needNotificationBar(true)
                 .build();
         DownloadManager.INSTANCE.start(this, URL1, options);
