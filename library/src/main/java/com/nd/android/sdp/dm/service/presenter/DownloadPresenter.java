@@ -4,7 +4,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
@@ -98,6 +97,9 @@ public class DownloadPresenter {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.url(pUrl);
         final DownloadsCursor cursor = downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
+        if (cursor.getCount() == 0) {
+            return;
+        }
         cursor.moveToFirst();
         DownloadsContentValues contentValues = new DownloadsContentValues();
         contentValues.putUrl(pUrl);
@@ -117,13 +119,17 @@ public class DownloadPresenter {
      * @param pUrl             下载地址
      * @param md5              文件md5(用于秒下)
      * @param pDownloadOptions the download options
+     * @return 是否添加成功
      * @author Young
      */
-    public void addTask(@NonNull final String pUrl, String md5, @NonNull final DownloadOptions pDownloadOptions) {
+    public boolean addTask(@NonNull final String pUrl, String md5, @NonNull final DownloadOptions pDownloadOptions) {
         final Subscription cachedSubscription = mUriSubscriptionMap.get(pUrl);
         if (cachedSubscription != null && !cachedSubscription.isUnsubscribed()) {
             // 已经在做，不做
-            return;
+            return false;
+        }
+        if (checkExists(pUrl)) {
+            return false;
         }
         final Subscription subscription = getTaskStream(pUrl, md5, pDownloadOptions)
                 .subscribeOn(Schedulers.io())
@@ -150,6 +156,35 @@ public class DownloadPresenter {
                     }
                 });
         mUriSubscriptionMap.put(pUrl, subscription);
+        return true;
+    }
+
+    /**
+     * 判断任务是否存在
+     *
+     * @param pUrl
+     * @return
+     */
+    private boolean checkExists(@NonNull String pUrl) {
+        final DownloadsCursor query = query(pUrl);
+        try {
+            final int count = query.getCount();
+            if (count > 0) {
+                query.moveToFirst();
+                // 如果是后台被Kill掉，有可能是Downloading，这个时候也应该执行下载操作
+                // 在队列中的任务应该由前置任务判断HashMap中的Subsctiption
+                // 如果是暂停状态和取消状态，认为不存在，重新下载
+                // 综上，只有在任务已经完成的情况下，才不需要执行下载操作
+                // 需加上判断文件是否存在
+                if (query.getState() == State.FINISHED.getValue()
+                        && new File(query.getFilepath()).exists()) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            query.close();
+        }
     }
 
     /**
@@ -160,12 +195,12 @@ public class DownloadPresenter {
     public Observable<DownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
         return Observable
                 .just(md5)
-                .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions.getModuleName()))
+                .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions))
                 .flatMap(s -> getDownloadInfoStream(pUrl, pDownloadOptions))
                 .buffer(1000, TimeUnit.MILLISECONDS)
                 .filter(downloadInfoInners -> downloadInfoInners != null && downloadInfoInners.size() > 0)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
-                .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
+//                .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
                 .map(writeStateToDb(pDownloadOptions));
     }
 
@@ -197,39 +232,49 @@ public class DownloadPresenter {
     @NonNull
     private Observable<String> judgeMd5Exist(String pUrl,
                                              String pMd5,
-                                             String moduleName) {
+                                             DownloadOptions pDownloadOptions) {
         return Observable.create(subscriber -> {
             if (!TextUtils.isEmpty(pMd5)) {
-                DownloadsSelection downloadsSelection = new DownloadsSelection();
-                downloadsSelection.md5(pMd5);
-                downloadsSelection.orderById(true);
-                final DownloadsCursor cursor = downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
-                if (cursor.getCount() != 0) {
-                    // 将该任务直接索引到旧任务的相同文件路径
-                    cursor.moveToFirst();
-                    if (cursor.getState() == State.FINISHED.getValue()
-                            && cursor.getCurrentSize().equals(cursor.getTotalSize())) {
-                        // 判断文件是否存在
-                        String filepath = cursor.getFilepath();
-                        File file = new File(filepath);
-                        if (file.exists()) {
-                            DownloadsContentValues contentValues = new DownloadsContentValues();
-                            contentValues.putMd5(pMd5);
-                            contentValues.putUrl(pUrl);
-                            contentValues.putFilepath(filepath);
-                            contentValues.putCreateTime(new Date());
-                            contentValues.putCurrentSize(cursor.getCurrentSize());
-                            contentValues.putTotalSize(cursor.getTotalSize());
-                            contentValues.putModuleName(moduleName);
-                            contentValues.putState(State.FINISHED.getValue());
-                            contentValues.insert(mContentResolver);
-                            subscriber.onCompleted();
-                            return;
+                DownloadsCursor cursor = null;
+                try {
+                    DownloadsSelection downloadsSelection = new DownloadsSelection();
+                    downloadsSelection.md5(pMd5.toLowerCase());
+                    downloadsSelection.orderById(true);
+                    cursor = downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
+                    if (cursor.getCount() != 0) {
+                        // 将该任务直接索引到旧任务的相同文件路径
+                        cursor.moveToFirst();
+                        if (cursor.getState() == State.FINISHED.getValue()
+                                && cursor.getCurrentSize().equals(cursor.getTotalSize())) {
+                            // 判断文件是否存在
+                            String filepath = cursor.getFilepath();
+                            File file = new File(filepath);
+                            final File destFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
+                            if (file.exists()) {
+                                IoUtils.copyFile(file, destFile);
+                                DownloadsContentValues contentValues = new DownloadsContentValues();
+                                contentValues.putMd5(pMd5);
+                                contentValues.putUrl(pUrl);
+                                contentValues.putFilepath(destFile.getAbsolutePath());
+                                contentValues.putCreateTime(new Date());
+                                contentValues.putCurrentSize(cursor.getCurrentSize());
+                                contentValues.putTotalSize(cursor.getTotalSize());
+                                contentValues.putModuleName(pDownloadOptions.getModuleName());
+                                contentValues.putState(State.FINISHED.getValue());
+                                contentValues.insert(mContentResolver);
+                                subscriber.onCompleted();
+                                return;
+                            }
                         }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (cursor != null) {
+                        cursor.close();
                     }
                 }
                 // 不存在，需要向下传递
-                cursor.close();
             }
             subscriber.onNext(pMd5);
             subscriber.onCompleted();
@@ -245,23 +290,24 @@ public class DownloadPresenter {
      */
     @NonNull
     private Observable<DownloadInfo> getDownloadInfoStream(@NonNull final String pUrl,
-                                                                @NonNull final DownloadOptions pDownloadOptions) {
+                                                           @NonNull final DownloadOptions pDownloadOptions) {
         return Observable.create(new Observable.OnSubscribe<DownloadInfo>() {
             @Override
             public void call(final Subscriber<? super DownloadInfo> pSubscriber) {
                 // 写到数据库
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                 // md5如果相同的话不会走到这里
+                // 下载文件冲突处理
                 ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
                 downloadFile = conflictStragedy.getRepeatFileName(downloadFile);
                 final File tmpFile = new File(downloadFile.getAbsolutePath() + ".tmp");
                 final String filePath = downloadFile.getAbsolutePath();
                 long currentSize = 0;
-                ArrayMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();
+                HashMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();
                 if (tmpFile.exists()) {
                     currentSize = tmpFile.length();
                     if (extraForDownloader == null) {
-                        extraForDownloader = new ArrayMap<>();
+                        extraForDownloader = new HashMap<>();
                     }
                     extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
                 }
@@ -282,7 +328,9 @@ public class DownloadPresenter {
                 final Downloader downloader;
                 try {
                     downloader = downloaderClass.newInstance();
-                    final InputStream downloaderStream = downloader.getStream(pUrl, extraForDownloader);
+                    // 拼凑真实下载路径
+                    String downloadUrl = getDownloadUrl(pUrl, pDownloadOptions);
+                    final InputStream downloaderStream = downloader.getStream(downloadUrl, extraForDownloader);
                     boolean loaded = false;
                     try {
                         loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, (current, total) -> {
@@ -332,6 +380,25 @@ public class DownloadPresenter {
     }
 
     /**
+     * 拼凑出真实下载地址
+     *
+     * @param pUrl
+     * @param pDownloadOptions
+     * @return
+     */
+    private String getDownloadUrl(String pUrl, DownloadOptions pDownloadOptions) {
+        final HashMap<String, String> urlParams = pDownloadOptions.getUrlParams();
+        if (urlParams != null && urlParams.size() > 0) {
+            Uri.Builder b = Uri.parse(pUrl).buildUpon();
+            for (String key : urlParams.keySet()) {
+                b.appendQueryParameter(key, urlParams.get(key));
+            }
+            return b.build().toString();
+        }
+        return pUrl;
+    }
+
+    /**
      * 暂停下载
      *
      * @param pUrl
@@ -353,7 +420,6 @@ public class DownloadPresenter {
         final Subscription cacheSubscriber = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !cacheSubscriber.isUnsubscribed()) {
             cacheSubscriber.unsubscribe();
-            updateState(pUrl, State.CANCEL);
             final DownloadsCursor query = query(pUrl);
             query.moveToFirst();
             final File file = new File(query.getFilepath());
@@ -362,6 +428,7 @@ public class DownloadPresenter {
             final File tmpFile = new File(file.getAbsolutePath() + ".tmp");
             tmpFile.delete();
         }
+        updateState(pUrl, State.CANCEL);
     }
 
     /**

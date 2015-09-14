@@ -1,10 +1,11 @@
 package com.nd.android.sdp.dm.options;
 
-import android.support.v4.util.ArrayMap;
+import android.support.annotation.NonNull;
 
 import com.nd.android.sdp.dm.downloader.Downloader;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * The Download options.
@@ -15,7 +16,7 @@ public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
 
-    private ArrayMap<String, String> mExtraForDownloader;
+    private HashMap<String, String> mExtraForDownloader;
 
     private Class<? extends Downloader> mDownloader;
 
@@ -31,12 +32,15 @@ public class DownloadOptions implements Serializable {
 
     private OpenAction mOpenAction;
 
-    public DownloadOptions(ArrayMap<String, String> pExtraForDownloader,
+    private HashMap<String, String> mUrlParams;
+
+    public DownloadOptions(HashMap<String, String> pExtraForDownloader,
                            Class<? extends Downloader> pDownloader,
                            String pFileName,
                            String pParentDirPath,
                            String pModuleName,
                            OpenAction pOpenAction,
+                           HashMap<String, String> pUrlParams,
                            boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
@@ -45,9 +49,10 @@ public class DownloadOptions implements Serializable {
         mModuleName = pModuleName;
         mOpenAction = pOpenAction;
         mNeedNotificationBar = pNeedNotificationBar;
+        mUrlParams = pUrlParams;
     }
 
-    public ArrayMap<String, String> getExtraForDownloader() {
+    public HashMap<String, String> getExtraForDownloader() {
         return mExtraForDownloader;
     }
 
@@ -73,6 +78,11 @@ public class DownloadOptions implements Serializable {
 
     public OpenAction getOpenAction() {
         return mOpenAction;
+    }
+
+    @NonNull
+    public HashMap<String,String> getUrlParams() {
+        return mUrlParams;
     }
 
     public ConflictStragedy getConflictStragedy() {

@@ -2,6 +2,8 @@ package com.nd.android.sdp.dm.utils;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -178,6 +180,19 @@ public final class IoUtils {
             }
         } finally {
             closeSilently(is);
+        }
+    }
+
+    public static void copyFile(File pSrcFile, File pDestFile) throws IOException {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = new FileInputStream(pSrcFile);
+            out = new FileOutputStream(pDestFile);
+            copyStream(in, out, null);
+        } finally {
+            closeSilently(in);
+            closeSilently(out);
         }
     }
 } 

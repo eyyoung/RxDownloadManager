@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         final DownloadOptions options = new DownloadOptionsBuilder()
                 .fileName("test.apk")
                 .parentDirPath("/sdcard")
+                .urlParam("ignore", "test")
                 .openAction((pContext, filePath) -> {
                     File file = new File(filePath);
                     Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     @Override
     public void onPause(String pUrl) {
-
+        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -102,7 +103,6 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     public void onPause(View view) {
         DownloadManager.INSTANCE.pause(this, URL1);
-        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show();
     }
 
     public void onRepeatMd5(View view) {
@@ -111,7 +111,6 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
                 .parentDirPath("/sdcard")
                 .build();
         DownloadManager.INSTANCE.start(this, URL2, "d41d8cd98f00b204e9800998ecf8427e", options);
-        DownloadManager.INSTANCE.registerDownloadListener(this);
     }
 
     public void onCheckMd5(View view) {

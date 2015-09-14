@@ -111,8 +111,8 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
 
     private void startTask(Intent intent, String url, DownloadOptions downloadOptions) {
         String md5 = intent.getStringExtra(PARAM_MD5);
-        mDownloadPresenter.addTask(url, md5, downloadOptions);
-        if (downloadOptions.isNeedNotificationBar()) {
+        final boolean addTask = mDownloadPresenter.addTask(url, md5, downloadOptions);
+        if (addTask && downloadOptions.isNeedNotificationBar()) {
             makeNotification(downloadOptions.getFileName(), url);
             if (downloadOptions.getOpenAction() != null) {
                 mOpenActionArrayMap.put(url, downloadOptions.getOpenAction());
@@ -134,8 +134,6 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                         .setSmallIcon(R.drawable.downloadmanager_ic_download_noti)
                         .setContentTitle(getString(R.string.downloadmanager_downloading, pFileName))
                         .setProgress(100, 0, false)
-                        .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText(getString(R.string.downloadmanager_downloading, pFileName)))
                         .addAction(R.drawable.downloadmanager_ic_block,
                                 getString(R.string.downloadmanager_cancel), piCancel)
                         .addAction(R.drawable.downloadmanager_ic_pause,

@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 /**
@@ -73,7 +72,6 @@ public enum DownloadObserver {
     private PublishSubject<DownloadInfo> subscribeDownloadListener() {
         final PublishSubject<DownloadInfo> subject = PublishSubject.create();
         subject
-                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(pDownloadInfo -> {
                     for (OnDownloadLisener pAction : mProgressAction) {

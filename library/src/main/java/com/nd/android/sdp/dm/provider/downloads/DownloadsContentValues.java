@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.nd.android.sdp.dm.provider.base.AbstractContentValues;
 
@@ -22,7 +23,7 @@ public class DownloadsContentValues extends AbstractContentValues {
      * Update row(s) using the values stored by this object and the given selection.
      *
      * @param contentResolver The content resolver to use.
-     * @param where The selection to use (can be {@code null}).
+     * @param where           The selection to use (can be {@code null}).
      */
     public int update(ContentResolver contentResolver, @Nullable DownloadsSelection where) {
         return contentResolver.update(uri(), values(), where == null ? null : where.sel(), where == null ? null : where.args());
@@ -32,7 +33,7 @@ public class DownloadsContentValues extends AbstractContentValues {
      * Update row(s) using the values stored by this object and the given selection.
      *
      * @param contentResolver The content resolver to use.
-     * @param where The selection to use (can be {@code null}).
+     * @param where           The selection to use (can be {@code null}).
      */
     public int update(Context context, @Nullable DownloadsSelection where) {
         return context.getContentResolver().update(uri(), values(), where == null ? null : where.sel(), where == null ? null : where.args());
@@ -68,6 +69,9 @@ public class DownloadsContentValues extends AbstractContentValues {
      * 文件md5，用于查询是否已经下载过，秒下
      */
     public DownloadsContentValues putMd5(@Nullable String value) {
+        if (!TextUtils.isEmpty(value)) {
+            value = value.toLowerCase();
+        }
         mContentValues.put(DownloadsColumns.MD5, value);
         return this;
     }

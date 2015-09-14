@@ -1,17 +1,18 @@
 package com.nd.android.sdp.dm.options;
 
-import android.support.v4.util.ArrayMap;
-
 import com.nd.android.sdp.dm.downloader.Downloader;
 
+import java.util.HashMap;
+
 public class DownloadOptionsBuilder {
-    private ArrayMap<String, String> mExtraForDownloader = null;
+    private HashMap<String, String> mExtraForDownloader = null;
     private Class<? extends Downloader> mDownloader = null;
     private String mParentDirPath;
     private String mModuleName = "sdp_common";
     private boolean mNeedNotificationBar = false;
     private String mFileName;
     private OpenAction mOpenAction;
+    private HashMap<String, String> mUrlParams = new HashMap<>();
 
     /**
      * 下载头
@@ -19,7 +20,7 @@ public class DownloadOptionsBuilder {
      * @param pExtraForDownloader 下载头
      * @return
      */
-    public DownloadOptionsBuilder extraForDownloader(ArrayMap<String, String> pExtraForDownloader) {
+    public DownloadOptionsBuilder extraForDownloader(HashMap<String, String> pExtraForDownloader) {
         mExtraForDownloader = pExtraForDownloader;
         return this;
     }
@@ -91,6 +92,19 @@ public class DownloadOptionsBuilder {
         return this;
     }
 
+    /**
+     * Url参数
+     *
+     * @param paramKey   Param Key
+     * @param paramValue Param Value
+     * @return download options builder
+     * @author Young
+     */
+    public DownloadOptionsBuilder urlParam(String paramKey, String paramValue) {
+        mUrlParams.put(paramKey, paramValue);
+        return this;
+    }
+
     public DownloadOptions build() {
         return new DownloadOptions(mExtraForDownloader,
                 mDownloader,
@@ -98,6 +112,7 @@ public class DownloadOptionsBuilder {
                 mParentDirPath,
                 mModuleName,
                 mOpenAction,
+                mUrlParams,
                 mNeedNotificationBar);
     }
 }
