@@ -35,9 +35,11 @@ public enum DownloadObserver {
     final private ArrayMap<String, PublishSubject<BaseDownloadInfo>> mSubjectMap = new ArrayMap<>();
 
     public void init(ContentResolver pContentResolver) {
-        mContentResolver = pContentResolver;
-        this.mContentResolver.registerContentObserver(
-                DownloadsColumns.CONTENT_URI, true, mContentObserver);
+        if (mContentResolver == null) {
+            mContentResolver = pContentResolver;
+            this.mContentResolver.registerContentObserver(
+                    DownloadsColumns.CONTENT_URI, true, mContentObserver);
+        }
     }
 
     final private ContentObserver mContentObserver = new ContentObserver(new Handler()) {

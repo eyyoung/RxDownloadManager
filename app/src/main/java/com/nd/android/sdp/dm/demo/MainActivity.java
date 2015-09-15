@@ -31,8 +31,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mPb = (ProgressBar) findViewById(R.id.pb);
-        DownloadManager.INSTANCE.init(this);
-        DownloadManager.INSTANCE.registerDownloadListener(this);
+        DownloadManager.INSTANCE.registerDownloadListener(this, this);
     }
 
     @Override
