@@ -10,6 +10,7 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -38,6 +39,9 @@ dependencies {
     compile 'io.reactivex:rxjava:1.0.14'
     compile 'com.nd.android.smartcan:smart-okhttp:2.2.0'
     testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    androidTestCompile 'com.android.support.test:runner:0.3'
+    androidTestCompile 'com.android.support.test:rules:0.3'
 }
 
 tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
@@ -50,7 +54,7 @@ uploadArchives {
             repository(url: "http://nexus.sdp.nd/nexus/content/repositories/android-3rd/") {
                 authentication(userName: mavenUser, password: mavenPassword)
             }
-            pom.version = "0.1.0"
+            pom.version = "0.1.2"
             pom.artifactId = "downloadmanager"
             pom.groupId = "com.nd.android.sdp.common"
         }

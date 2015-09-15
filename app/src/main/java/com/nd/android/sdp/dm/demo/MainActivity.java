@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mPb = (ProgressBar) findViewById(R.id.pb);
+        DownloadManager.INSTANCE.init(this);
         DownloadManager.INSTANCE.registerDownloadListener(this, this);
     }
 
@@ -56,18 +57,27 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         return super.onOptionsItemSelected(item);
     }
 
+    private boolean mIsPause = true;
+
     public void onDownload(View view) {
-        final DownloadOptions options = new DownloadOptionsBuilder()
-                .fileName("test.apk")
-                .parentDirPath("/sdcard")
-                .urlParam("ignore", "test")
-                .openAction((pContext, filePath) -> {
-                    File file = new File(filePath);
-                    Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                })
-                .needNotificationBar(true)
-                .build();
-        DownloadManager.INSTANCE.start(this, URL1, options);
+        if (!mIsPause) {
+            mIsPause = true;
+            DownloadManager.INSTANCE.pause(this, URL1);
+        } else {
+            final DownloadOptions options = new DownloadOptionsBuilder()
+                    .fileName("test.apk")
+                    .parentDirPath("/sdcard")
+                    .urlParam("ignore", "test")
+                    .openAction((pContext, filePath) -> {
+                        File file = new File(filePath);
+                        Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                    })
+                    .needNotificationBar(true)
+                    .build();
+            DownloadManager.INSTANCE.start(this, URL1, options);
+            mIsPause = false;
+        }
+
     }
 
     public void onStop(View view) {
@@ -76,7 +86,9 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     @Override
     public void onPause(String pUrl) {
-        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show();
+        mIsPause = true;
+//        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show();
+        Log.d("MainActivity", "onPause");
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
@@ -142,12 +143,14 @@ public class DownloadPresenter {
 
                     @Override
                     public void onCompleted() {
+                        mUriSubscriptionMap.remove(pUrl);
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         cancelDownload(pUrl);
                         e.printStackTrace();
+                        mUriSubscriptionMap.remove(pUrl);
                     }
 
                     @Override
@@ -334,7 +337,7 @@ public class DownloadPresenter {
                     final InputStream downloaderStream = downloader.getStream(downloadUrl, extraForDownloader);
                     boolean loaded = false;
                     try {
-                        loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, (current, total) -> {
+                        loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, DEFAULT_BUFFER_SIZE, currentSize, downloader.getContentLength(), (current, total) -> {
                             final boolean isCanceled = pSubscriber.isUnsubscribed();
                             if (!isCanceled) {
                                 BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
@@ -346,7 +349,7 @@ public class DownloadPresenter {
                                 pSubscriber.onNext(downloadInfoInner);
                             }
                             return !isCanceled;
-                        }, DEFAULT_BUFFER_SIZE, currentSize, downloader.getContentLength());
+                        });
                     } finally {
                         if (loaded && tmpFile.renameTo(downloadFile)) {
                             String fileMd5 = null;
@@ -405,10 +408,11 @@ public class DownloadPresenter {
      * @param pUrl
      */
     public void pauseDownload(String pUrl) {
-        final Subscription cacheSubscriber = mUriSubscriptionMap.get(pUrl);
-        if (mUriSubscriptionMap.containsKey(pUrl) && !cacheSubscriber.isUnsubscribed()) {
-            cacheSubscriber.unsubscribe();
+        final Subscription subscription = mUriSubscriptionMap.get(pUrl);
+        if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
+            subscription.unsubscribe();
             updateState(pUrl, State.PAUSING);
+            Log.d("DownloadPresenter", "pause");
         }
     }
 
@@ -418,9 +422,9 @@ public class DownloadPresenter {
      * @param pUrl
      */
     public void cancelDownload(String pUrl) {
-        final Subscription cacheSubscriber = mUriSubscriptionMap.get(pUrl);
-        if (mUriSubscriptionMap.containsKey(pUrl) && !cacheSubscriber.isUnsubscribed()) {
-            cacheSubscriber.unsubscribe();
+        final Subscription subscription = mUriSubscriptionMap.get(pUrl);
+        if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
+            subscription.unsubscribe();
             final DownloadsCursor query = query(pUrl);
             query.moveToFirst();
             final File file = new File(query.getFilepath());
@@ -443,6 +447,7 @@ public class DownloadPresenter {
                 subscription.unsubscribe();
             }
         }
+        mUriSubscriptionMap.clear();
     }
 
     public void onDestroy() {

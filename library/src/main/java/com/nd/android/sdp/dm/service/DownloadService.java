@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.util.ArrayMap;
 
+import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.R;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
@@ -42,6 +43,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     @Override
     public void onCreate() {
         super.onCreate();
+        DownloadManager.INSTANCE.init(this);
         mDownloadPresenter = new DownloadPresenter(getContentResolver());
         DownloadObserver.INSTANCE.init(getContentResolver());
         DownloadObserver.INSTANCE.registerProgressListener(this);

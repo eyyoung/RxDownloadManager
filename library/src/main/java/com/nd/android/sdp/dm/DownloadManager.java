@@ -7,6 +7,7 @@ import android.support.v4.util.ArrayMap;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
+import com.nd.android.sdp.dm.provider.DownloadProvider;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsSelection;
@@ -23,6 +24,10 @@ import java.io.File;
 public enum DownloadManager {
 
     INSTANCE;
+
+    public void init(Context pContext) {
+        DownloadProvider.init(pContext.getApplicationContext());
+    }
 
     /**
      * 开始下载

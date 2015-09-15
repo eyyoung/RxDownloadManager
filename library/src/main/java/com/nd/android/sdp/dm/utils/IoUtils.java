@@ -136,21 +136,20 @@ public final class IoUtils {
      *
      * @param is         输入流
      * @param pFile      文件名
-     * @param pListener  监听器
      * @param bufferSize 缓冲区大小
      * @param current    起始位置
      * @param total      此次流长度
+     * @param pListener  监听器
      * @return
      * @throws IOException
      */
     public static boolean copyStreamToFile(InputStream is,
                                            File pFile,
-                                           IoUtils.CopyListener pListener,
-                                           int bufferSize,
-                                           long current,
-                                           long total) throws IOException {
+                                           int bufferSize, long current, long total,
+                                           CopyListener pListener) throws IOException {
 
         try {
+            ensureParentFile(pFile);
             RandomAccessFile os = new RandomAccessFile(pFile, "rw");
             long startOffset = current;
             try {
@@ -183,10 +182,22 @@ public final class IoUtils {
         }
     }
 
+    /**
+     * 确保父级目录存在
+     *
+     * @param pFile
+     */
+    private static void ensureParentFile(File pFile) {
+        // Fix Issue #2
+        final File parentFile = pFile.getParentFile();
+        parentFile.mkdirs();
+    }
+
     public static void copyFile(File pSrcFile, File pDestFile) throws IOException {
         InputStream in = null;
         OutputStream out = null;
         try {
+            ensureParentFile(pDestFile);
             in = new FileInputStream(pSrcFile);
             out = new FileOutputStream(pDestFile);
             copyStream(in, out, null);
