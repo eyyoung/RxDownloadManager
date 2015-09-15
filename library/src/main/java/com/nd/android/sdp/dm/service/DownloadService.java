@@ -131,11 +131,12 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         PendingIntent piPause = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.downloadmanager_ic_download_noti)
+                        .setSmallIcon(android.R.drawable.stat_sys_download)
                         .setContentTitle(getString(R.string.downloadmanager_downloading, pFileName))
                         .setProgress(100, 0, false)
                         .addAction(R.drawable.downloadmanager_ic_block,
                                 getString(R.string.downloadmanager_cancel), piCancel)
+                        .setOngoing(true)
                         .addAction(R.drawable.downloadmanager_ic_pause,
                                 getString(R.string.downloadmanager_pause), piPause);
         Notification notification = builder.build();
@@ -192,7 +193,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         PendingIntent piOpen = PendingIntent.getService(this, 3, openIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.downloadmanager_ic_download_noti)
+                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
                         .setContentIntent(piOpen)
                         .setContentTitle(getString(R.string.downloadmanager_download_complete_title, file.getName()))
                         .setContentText(getString(R.string.downloadmanager_download_complete_content, file.getAbsolutePath()));

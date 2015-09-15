@@ -14,7 +14,8 @@ import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
-import com.nd.android.sdp.dm.pojo.DownloadInfo;
+import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
+import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 
 import java.io.File;
 
@@ -125,7 +126,14 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
     }
 
     public void getInfo(View view) {
-        final ArrayMap<String, DownloadInfo> downloadInfos = DownloadManager.INSTANCE.getDownloadInfos(this, URL1, URL2);
-        Toast.makeText(this, downloadInfos.get(URL1).filePath, Toast.LENGTH_SHORT).show();
+        final ArrayMap<String, IDownloadInfo> downloadInfos;
+        try {
+            downloadInfos = DownloadManager.INSTANCE.getDownloadInfos(this, BaseDownloadInfo.class, URL1, URL2);
+            Toast.makeText(this, downloadInfos.get(URL1).getFilePath(), Toast.LENGTH_SHORT).show();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
     }
 }

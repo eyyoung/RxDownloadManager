@@ -8,7 +8,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 
-import com.nd.android.sdp.dm.pojo.DownloadInfo;
+import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.state.State;
@@ -32,7 +32,7 @@ public enum DownloadObserver {
     protected ContentResolver mContentResolver;
 
     final private Set<OnDownloadLisener> mProgressAction = new HashSet<>();
-    final private ArrayMap<String, PublishSubject<DownloadInfo>> mSubjectMap = new ArrayMap<>();
+    final private ArrayMap<String, PublishSubject<BaseDownloadInfo>> mSubjectMap = new ArrayMap<>();
 
     public void init(ContentResolver pContentResolver) {
         mContentResolver = pContentResolver;
@@ -50,9 +50,9 @@ public enum DownloadObserver {
                 return;
             }
             downloadsCursor.moveToFirst();
-            DownloadInfo downloadInfoInner = new DownloadInfo(downloadsCursor);
+            BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(downloadsCursor);
             String url = downloadsCursor.getUrl();
-            PublishSubject<DownloadInfo> subject = mSubjectMap.get(url);
+            PublishSubject<BaseDownloadInfo> subject = mSubjectMap.get(url);
             // 缓存中不存在
             if (subject == null) {
                 subject = subscribeDownloadListener();
@@ -69,8 +69,8 @@ public enum DownloadObserver {
     };
 
     @NonNull
-    private PublishSubject<DownloadInfo> subscribeDownloadListener() {
-        final PublishSubject<DownloadInfo> subject = PublishSubject.create();
+    private PublishSubject<BaseDownloadInfo> subscribeDownloadListener() {
+        final PublishSubject<BaseDownloadInfo> subject = PublishSubject.create();
         subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(pDownloadInfo -> {

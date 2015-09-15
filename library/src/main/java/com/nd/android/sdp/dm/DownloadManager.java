@@ -6,7 +6,7 @@ import android.support.v4.util.ArrayMap;
 
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
-import com.nd.android.sdp.dm.pojo.DownloadInfo;
+import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsSelection;
@@ -129,17 +129,25 @@ public enum DownloadManager {
      * @return
      */
     @NonNull
-    public ArrayMap<String, DownloadInfo> getDownloadInfos(Context pContext, String... url) {
+    public ArrayMap<String, IDownloadInfo> getDownloadInfos(Context pContext,
+                                                            Class<? extends IDownloadInfo> pClass,
+                                                            String... url) throws IllegalAccessException, InstantiationException {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.urlContains(url);
         downloadsSelection.orderById(true);
-        ArrayMap<String, DownloadInfo> downloadInfos = new ArrayMap<>();
+        ArrayMap<String, IDownloadInfo> downloadInfos = new ArrayMap<>();
         final DownloadsCursor cursor = downloadsSelection.query(pContext, DownloadsColumns.ALL_COLUMNS);
         if (cursor.getCount() == 0) {
             return downloadInfos;
         }
         while (cursor.moveToNext()) {
-            DownloadInfo downloadInfo = new DownloadInfo(cursor);
+            IDownloadInfo downloadInfo = pClass.newInstance();
+            downloadInfo.setCurrentSize(cursor.getCurrentSize());
+            downloadInfo.setTotalSize(cursor.getTotalSize());
+            downloadInfo.setFilePath(cursor.getFilepath());
+            downloadInfo.setMd5(cursor.getMd5());
+            downloadInfo.setState(State.fromInt(cursor.getState()));
+            downloadInfo.setUrl(cursor.getUrl());
             downloadInfos.put(cursor.getUrl(), downloadInfo);
         }
         cursor.close();

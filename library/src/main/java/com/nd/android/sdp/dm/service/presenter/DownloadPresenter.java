@@ -10,7 +10,7 @@ import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
-import com.nd.android.sdp.dm.pojo.DownloadInfo;
+import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsContentValues;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
@@ -133,7 +133,7 @@ public class DownloadPresenter {
         }
         final Subscription subscription = getTaskStream(pUrl, md5, pDownloadOptions)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<DownloadInfo>() {
+                .subscribe(new Subscriber<BaseDownloadInfo>() {
 
                     @Override
                     public void onStart() {
@@ -151,7 +151,7 @@ public class DownloadPresenter {
                     }
 
                     @Override
-                    public void onNext(DownloadInfo downloadInfoInner) {
+                    public void onNext(BaseDownloadInfo downloadInfoInner) {
 
                     }
                 });
@@ -192,7 +192,7 @@ public class DownloadPresenter {
      *
      * @author Young
      */
-    public Observable<DownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
+    public Observable<BaseDownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
         return Observable
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions))
@@ -200,7 +200,7 @@ public class DownloadPresenter {
                 .buffer(1000, TimeUnit.MILLISECONDS)
                 .filter(downloadInfoInners -> downloadInfoInners != null && downloadInfoInners.size() > 0)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
-//                .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
+                .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
                 .map(writeStateToDb(pDownloadOptions));
     }
 
@@ -211,7 +211,7 @@ public class DownloadPresenter {
      * @return
      */
     @NonNull
-    private Func1<DownloadInfo, DownloadInfo> writeStateToDb(@NonNull DownloadOptions pDownloadOptions) {
+    private Func1<BaseDownloadInfo, BaseDownloadInfo> writeStateToDb(@NonNull DownloadOptions pDownloadOptions) {
         return downloadInfoInner -> {
             insertOrUpdate(downloadInfoInner.url,
                     downloadInfoInner.filePath,
@@ -251,6 +251,7 @@ public class DownloadPresenter {
                             File file = new File(filepath);
                             final File destFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                             if (file.exists()) {
+                                // TODO: 2015/9/15 监听拷贝，传递进度
                                 IoUtils.copyFile(file, destFile);
                                 DownloadsContentValues contentValues = new DownloadsContentValues();
                                 contentValues.putMd5(pMd5);
@@ -289,11 +290,11 @@ public class DownloadPresenter {
      * @return
      */
     @NonNull
-    private Observable<DownloadInfo> getDownloadInfoStream(@NonNull final String pUrl,
-                                                           @NonNull final DownloadOptions pDownloadOptions) {
-        return Observable.create(new Observable.OnSubscribe<DownloadInfo>() {
+    private Observable<BaseDownloadInfo> getDownloadInfoStream(@NonNull final String pUrl,
+                                                               @NonNull final DownloadOptions pDownloadOptions) {
+        return Observable.create(new Observable.OnSubscribe<BaseDownloadInfo>() {
             @Override
-            public void call(final Subscriber<? super DownloadInfo> pSubscriber) {
+            public void call(final Subscriber<? super BaseDownloadInfo> pSubscriber) {
                 // 写到数据库
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                 // md5如果相同的话不会走到这里
@@ -313,7 +314,7 @@ public class DownloadPresenter {
                 }
                 // 添加任务
                 {
-                    DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
+                    BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
                             State.DOWNLOADING,
                             null,
                             filePath,
@@ -336,7 +337,7 @@ public class DownloadPresenter {
                         loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, (current, total) -> {
                             final boolean isCanceled = pSubscriber.isUnsubscribed();
                             if (!isCanceled) {
-                                DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
+                                BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
                                         State.DOWNLOADING,
                                         null,
                                         filePath,
@@ -355,7 +356,7 @@ public class DownloadPresenter {
                                 // 计算失败并不影响下载
                                 e.printStackTrace();
                             }
-                            DownloadInfo downloadInfoInner = new DownloadInfo(pUrl,
+                            BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
                                     State.FINISHED,
                                     fileMd5,
                                     filePath,
