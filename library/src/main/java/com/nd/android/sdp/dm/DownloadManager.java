@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 
+import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
@@ -11,6 +12,7 @@ import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsSelection;
 import com.nd.android.sdp.dm.service.DownloadService;
+import com.nd.android.sdp.dm.service.presenter.DownloadPresenter;
 import com.nd.android.sdp.dm.state.State;
 
 import java.io.File;
@@ -24,8 +26,28 @@ public enum DownloadManager {
 
     INSTANCE;
 
+    /**
+     * 初始化模块，用于初始化ContentProvider观察者
+     *
+     * @param pContext the context
+     * @author Young
+     */
     public void init(Context pContext) {
+        init(pContext, null);
+    }
+
+    /**
+     * 第二个参数可设置全局的默认下载器
+     *
+     * @param pContext           the context
+     * @param pDefaultDownloader the default downloader
+     * @author Young
+     */
+    public void init(Context pContext, Class<? extends Downloader> pDefaultDownloader) {
         DownloadObserver.INSTANCE.init(pContext.getContentResolver());
+        if (pDefaultDownloader != null) {
+            DownloadPresenter.setDefaultDownloader(pDefaultDownloader);
+        }
     }
 
     /**

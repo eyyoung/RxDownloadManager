@@ -182,24 +182,26 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
 
     @Override
     public void onComplete(String pUrl) {
-        cancelNotify(pUrl);
-        final DownloadsCursor query = mDownloadPresenter.query(pUrl);
-        query.moveToFirst();
-        File file = new File(query.getFilepath());
-        Intent openIntent = new Intent(this, DownloadService.class);
-        openIntent.putExtra(PARAM_URL, pUrl);
-        openIntent.putExtra(PARAM_OPER, OPER.OPEN);
-        openIntent.putExtra(PARAM_OPEN_ACTION, mOpenActionArrayMap.get(pUrl));
-        PendingIntent piOpen = PendingIntent.getService(this, 3, openIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                        .setContentIntent(piOpen)
-                        .setContentTitle(getString(R.string.downloadmanager_download_complete_title, file.getName()))
-                        .setContentText(getString(R.string.downloadmanager_download_complete_content, file.getAbsolutePath()));
-        Notification notification = builder.build();
-        mNotifyManager.notify(pUrl.hashCode(), notification);
-        query.close();
+        if (mNotificationHashMap.containsKey(pUrl)) {
+            cancelNotify(pUrl);
+            final DownloadsCursor query = mDownloadPresenter.query(pUrl);
+            query.moveToFirst();
+            File file = new File(query.getFilepath());
+            Intent openIntent = new Intent(this, DownloadService.class);
+            openIntent.putExtra(PARAM_URL, pUrl);
+            openIntent.putExtra(PARAM_OPER, OPER.OPEN);
+            openIntent.putExtra(PARAM_OPEN_ACTION, mOpenActionArrayMap.get(pUrl));
+            PendingIntent piOpen = PendingIntent.getService(this, 3, openIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                            .setContentIntent(piOpen)
+                            .setContentTitle(getString(R.string.downloadmanager_download_complete_title, file.getName()))
+                            .setContentText(getString(R.string.downloadmanager_download_complete_content, file.getAbsolutePath()));
+            Notification notification = builder.build();
+            mNotifyManager.notify(pUrl.hashCode(), notification);
+            query.close();
+        }
         mOpenActionArrayMap.remove(pUrl);
     }
 

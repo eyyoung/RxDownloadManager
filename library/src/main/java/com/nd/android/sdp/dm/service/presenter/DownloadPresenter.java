@@ -46,7 +46,7 @@ public class DownloadPresenter {
 
     final private Map<String, Subscription> mUriSubscriptionMap = new HashMap<>();
 
-    public static final Class<? extends Downloader> DEFAULT_DOWNLOADER = BaseDownloader.class;
+    public static Class<? extends Downloader> DEFAULT_DOWNLOADER = BaseDownloader.class;
     public static final int DEFAULT_BUFFER_SIZE = 1024 * 100;
 
     public DownloadPresenter(ContentResolver pContentResolver) {
@@ -449,4 +449,7 @@ public class DownloadPresenter {
         pauseAll();
     }
 
+    public static void setDefaultDownloader(Class<? extends Downloader> pDefaultDownloader) {
+        DEFAULT_DOWNLOADER = pDefaultDownloader;
+    }
 }
