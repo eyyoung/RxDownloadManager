@@ -14,6 +14,7 @@ public class BaseDownloadInfo implements IDownloadInfo {
     public long totalSize;
     public String md5;
     public long speed;// 仅供界面展示使用，数据库不存储
+    public int httpState;
 
     public BaseDownloadInfo() {
     }
@@ -25,6 +26,8 @@ public class BaseDownloadInfo implements IDownloadInfo {
         currentSize = pDownloadsCursor.getCurrentSize();
         totalSize = pDownloadsCursor.getTotalSize();
         md5 = pDownloadsCursor.getMd5();
+        final Integer httpState = pDownloadsCursor.getHttpState();
+        this.httpState = httpState == null ? 0 : httpState;
     }
 
     public BaseDownloadInfo(String url,
@@ -39,6 +42,16 @@ public class BaseDownloadInfo implements IDownloadInfo {
         this.md5 = md5;
         this.filePath = pFilePath;
         this.totalSize = totalSize;
+    }
+
+    @Override
+    public int getHttpState() {
+        return httpState;
+    }
+
+    @Override
+    public void setHttpState(int pHttpState) {
+        httpState = pHttpState;
     }
 
     @Override

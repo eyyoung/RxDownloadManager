@@ -238,6 +238,22 @@ public class DownloadsSelection extends AbstractSelection<DownloadsSelection> {
         return this;
     }
 
+    public DownloadsSelection httpState(Integer... value) {
+        addEquals(DownloadsColumns.HTTP_STATE, value);
+        return this;
+    }
+
+    public DownloadsSelection httpStateNot(Integer... value) {
+        addNotEquals(DownloadsColumns.HTTP_STATE, value);
+        return this;
+    }
+
+
+    public DownloadsSelection httpStateLtEq(int value) {
+        addLessThanOrEquals(DownloadsColumns.HTTP_STATE, value);
+        return this;
+    }
+
     public DownloadsSelection moduleName(String... value) {
         addEquals(DownloadsColumns.MODULE_NAME, value);
         return this;

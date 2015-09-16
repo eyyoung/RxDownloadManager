@@ -24,6 +24,12 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="onErrorUrl"
+        android:text="错误地址" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:onClick="onCheckMd5"
         android:text="检查MD5文件" />
 

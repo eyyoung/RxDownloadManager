@@ -29,4 +29,8 @@ public interface IDownloadInfo {
     String getMd5();
 
     void setMd5(String pMd5);
+
+    int getHttpState();
+
+    void setHttpState(int pHttpState);
 }

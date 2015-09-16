@@ -2,6 +2,7 @@ package com.nd.android.sdp.dm;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 
 import com.nd.android.sdp.dm.observer.DownloadObserver;
@@ -91,7 +92,7 @@ public enum DownloadManager {
      * @param url the url
      * @author Young
      */
-    public void pause(Context pContext, String url) {
+    public void pause(Context pContext, @NonNull String url) {
         DownloadService.pause(pContext, url);
     }
 
@@ -102,6 +103,7 @@ public enum DownloadManager {
      * @param pMd5     Md5
      * @return 返回空为无此md5文件
      */
+    @Nullable
     public File getDownloadedFile(Context pContext, String pMd5) {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.md5(pMd5);
@@ -110,8 +112,7 @@ public enum DownloadManager {
         if (cursor.getCount() != 0) {
             // 将该任务直接索引到旧任务的相同文件路径
             cursor.moveToFirst();
-            if (cursor.getState() == State.FINISHED.getValue()
-                    && cursor.getCurrentSize().equals(cursor.getTotalSize())) {
+            if (cursor.getCurrentSize().equals(cursor.getTotalSize())) {
                 // 判断文件是否存在
                 String filepath = cursor.getFilepath();
                 File file = new File(filepath);

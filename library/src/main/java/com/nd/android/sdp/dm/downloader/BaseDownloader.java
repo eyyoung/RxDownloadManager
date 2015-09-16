@@ -3,6 +3,7 @@ package com.nd.android.sdp.dm.downloader;
 import com.nd.android.okhttp.OkHttpClient;
 import com.nd.android.okhttp.Request;
 import com.nd.android.okhttp.Response;
+import com.nd.android.sdp.dm.exception.DownloadHttpException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +20,7 @@ public class BaseDownloader implements Downloader {
     private Response mResponse;
 
     @Override
-    public InputStream getStream(String imageUri, HashMap<String, String> extra) throws IOException {
+    public InputStream getStream(String imageUri, HashMap<String, String> extra) throws IOException, DownloadHttpException {
         OkHttpClient client = new OkHttpClient();
         final Request.Builder builder = new Request.Builder().url(imageUri);
         if (extra != null) {
@@ -31,7 +32,12 @@ public class BaseDownloader implements Downloader {
         }
         final Request request = builder.build();
         mResponse = client.newCall(request).execute();
-        return mResponse.body().byteStream();
+        final int code = mResponse.code();
+        if (code / 100 == 2) {
+            return mResponse.body().byteStream();
+        } else {
+            throw new DownloadHttpException(code);
+        }
     }
 
     @Override

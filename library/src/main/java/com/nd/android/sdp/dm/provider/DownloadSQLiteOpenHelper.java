@@ -29,6 +29,7 @@ public class DownloadSQLiteOpenHelper extends SQLiteOpenHelper {
             + DownloadsColumns.FILEPATH + " TEXT, "
             + DownloadsColumns.MD5 + " TEXT, "
             + DownloadsColumns.STATE + " INTEGER, "
+            + DownloadsColumns.HTTP_STATE + " INTEGER, "
             + DownloadsColumns.MODULE_NAME + " TEXT DEFAULT 'sdp_common', "
             + DownloadsColumns.CURRENT_SIZE + " INTEGER, "
             + DownloadsColumns.TOTAL_SIZE + " INTEGER, "

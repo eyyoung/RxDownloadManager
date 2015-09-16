@@ -95,6 +95,19 @@ public class DownloadsContentValues extends AbstractContentValues {
     }
 
     /**
+     * 下载状态
+     */
+    public DownloadsContentValues putHttpState(@Nullable Integer value) {
+        mContentValues.put(DownloadsColumns.HTTP_STATE, value);
+        return this;
+    }
+
+    public DownloadsContentValues putHttpStateNull() {
+        mContentValues.putNull(DownloadsColumns.HTTP_STATE);
+        return this;
+    }
+
+    /**
      * 调用模块名称（区分是哪个模块调用的下载）
      */
     public DownloadsContentValues putModuleName(@Nullable String value) {

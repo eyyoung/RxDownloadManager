@@ -115,14 +115,14 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         String md5 = intent.getStringExtra(PARAM_MD5);
         final boolean addTask = mDownloadPresenter.addTask(url, md5, downloadOptions);
         if (addTask && downloadOptions.isNeedNotificationBar()) {
-            makeNotification(downloadOptions.getFileName(), url);
+            makeProgressNotification(downloadOptions.getFileName(), url);
             if (downloadOptions.getOpenAction() != null) {
                 mOpenActionArrayMap.put(url, downloadOptions.getOpenAction());
             }
         }
     }
 
-    private void makeNotification(String pFileName, String pUrl) {
+    private void makeProgressNotification(String pFileName, String pUrl) {
         Intent cancelIntent = new Intent(this, DownloadService.class);
         cancelIntent.putExtra(PARAM_URL, pUrl);
         cancelIntent.putExtra(PARAM_OPER, OPER.CANCEL);
@@ -142,7 +142,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                         .addAction(R.drawable.downloadmanager_ic_pause,
                                 getString(R.string.downloadmanager_pause), piPause);
         Notification notification = builder.build();
-        mNotifyManager.notify(pUrl.hashCode(), notification);
+        mNotifyManager.notify(Math.abs(pUrl.hashCode()), notification);
         mNotificationHashMap.put(pUrl, builder);
     }
 
@@ -178,7 +178,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     }
 
     private void cancelNotify(String pUrl) {
-        mNotifyManager.cancel(pUrl.hashCode());
+        mNotifyManager.cancel(Math.abs(pUrl.hashCode()));
         mNotificationHashMap.remove(pUrl);
     }
 
@@ -216,7 +216,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
             } else {
                 builder.setProgress(0, 0, true);
             }
-            mNotifyManager.notify(pUrl.hashCode(), builder.build());
+            mNotifyManager.notify(Math.abs(pUrl.hashCode()), builder.build());
         }
     }
 
@@ -224,5 +224,23 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     public void onCancel(String pUrl) {
         cancelNotify(pUrl);
         mOpenActionArrayMap.remove(pUrl);
+    }
+
+    @Override
+    public void onError(String pUrl, int httpState) {
+        final DownloadsCursor query = mDownloadPresenter.query(pUrl);
+        if (query == null || query.getCount() == 0) {
+            return;
+        }
+        query.moveToFirst();
+        File file = new File(query.getFilepath());
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(android.R.drawable.stat_notify_error)
+                        .setContentTitle(getString(R.string.downloadmanager_download_failed_title, file.getName()))
+                        .setContentText(getString(R.string.downloadmanager_download_failed_content, file.getName()));
+        Notification notification = builder.build();
+        mNotifyManager.notify(Math.abs(pUrl.hashCode()), notification);
+        query.close();
     }
 }

@@ -6,5 +6,7 @@
     <string name="downloadmanager_pause">暂停</string>
     <string name="downloadmanager_download_complete_title">%s下载完成</string>
     <string name="downloadmanager_download_complete_content">已保存至%s</string>
+    <string name="downloadmanager_download_failed_title">%s下载失败</string>
+    <string name="downloadmanager_download_failed_content">%s下载失败，请确认网络或下载地址是否正确</string>
 
 </resources>

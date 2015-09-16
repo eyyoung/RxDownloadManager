@@ -9,9 +9,11 @@ import android.util.Log;
 
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
+import com.nd.android.sdp.dm.exception.DownloadHttpException;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
+import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsContentValues;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
@@ -132,6 +134,14 @@ public class DownloadPresenter {
         if (checkExists(pUrl)) {
             return false;
         }
+        // 添加任务
+        insertOrUpdate(pUrl,
+                new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName()).getAbsolutePath(),
+                md5,
+                pDownloadOptions.getModuleName(),
+                State.DOWNLOADING,
+                0,
+                0);
         final Subscription subscription = getTaskStream(pUrl, md5, pDownloadOptions)
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Subscriber<BaseDownloadInfo>() {
@@ -148,7 +158,24 @@ public class DownloadPresenter {
 
                     @Override
                     public void onError(Throwable e) {
-                        cancelDownload(pUrl);
+                        if (e instanceof DownloadHttpException) {
+                            DownloadsSelection downloadsSelection = new DownloadsSelection();
+                            downloadsSelection.url(pUrl);
+                            // HTTP请求错误
+                            final IDownloadInfo downloadInfo = ((DownloadHttpException) e).getDownloadInfo();
+                            DownloadsContentValues contentValues = new DownloadsContentValues();
+                            contentValues.putUrl(downloadInfo.getUrl());
+                            contentValues.putFilepath(downloadInfo.getFilePath());
+                            contentValues.putModuleName(pDownloadOptions.getModuleName());
+                            contentValues.putTotalSize(downloadInfo.getTotalSize());
+                            contentValues.putState(downloadInfo.getState().getValue());
+                            contentValues.putCurrentSize(downloadInfo.getCurrentSize());
+                            contentValues.putHttpState(downloadInfo.getHttpState());
+                            contentValues.putCreateTime(new Date());
+                            contentValues.update(mContentResolver, downloadsSelection);
+                        } else {
+                            cancelDownload(pUrl);
+                        }
                         e.printStackTrace();
                         mUriSubscriptionMap.remove(pUrl);
                     }
@@ -256,16 +283,7 @@ public class DownloadPresenter {
                             if (file.exists()) {
                                 // TODO: 2015/9/15 监听拷贝，传递进度
                                 IoUtils.copyFile(file, destFile);
-                                DownloadsContentValues contentValues = new DownloadsContentValues();
-                                contentValues.putMd5(pMd5);
-                                contentValues.putUrl(pUrl);
-                                contentValues.putFilepath(destFile.getAbsolutePath());
-                                contentValues.putCreateTime(new Date());
-                                contentValues.putCurrentSize(cursor.getCurrentSize());
-                                contentValues.putTotalSize(cursor.getTotalSize());
-                                contentValues.putModuleName(pDownloadOptions.getModuleName());
-                                contentValues.putState(State.FINISHED.getValue());
-                                contentValues.insert(mContentResolver);
+                                updateState(pUrl, State.FINISHED);
                                 subscriber.onCompleted();
                                 return;
                             }
@@ -298,7 +316,6 @@ public class DownloadPresenter {
         return Observable.create(new Observable.OnSubscribe<BaseDownloadInfo>() {
             @Override
             public void call(final Subscriber<? super BaseDownloadInfo> pSubscriber) {
-                // 写到数据库
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                 // md5如果相同的话不会走到这里
                 // 下载文件冲突处理
@@ -314,15 +331,6 @@ public class DownloadPresenter {
                         extraForDownloader = new HashMap<>();
                     }
                     extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
-                }
-                // 添加任务
-                {
-                    BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
-                            State.DOWNLOADING,
-                            null,
-                            filePath,
-                            currentSize, 0);
-                    pSubscriber.onNext(downloadInfoInner);
                 }
                 // 开始下载
                 Class<? extends Downloader> downloaderClass = pDownloadOptions.getDownloader();
@@ -378,6 +386,17 @@ public class DownloadPresenter {
                 } catch (IOException e) {
                     e.printStackTrace();
                     pSubscriber.onError(e);
+                } catch (DownloadHttpException e) {
+                    e.printStackTrace();
+                    BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
+                            State.ERROR,
+                            null,
+                            filePath,
+                            0,
+                            0);
+                    downloadInfoInner.httpState = e.getHttpCode();
+                    DownloadHttpException downloadHttpException = new DownloadHttpException(downloadInfoInner);
+                    pSubscriber.onError(downloadHttpException);
                 }
             }
         });

@@ -9,7 +9,8 @@ public enum State {
     DOWNLOADING(0),
     PAUSING(1),
     CANCEL(-1),
-    FINISHED(2);
+    FINISHED(2),
+    ERROR(-999);
 
     public int getValue() {
         return mValue;
@@ -29,6 +30,8 @@ public enum State {
                 return PAUSING;
             case 2:
                 return FINISHED;
+            case -999:
+                return ERROR;
         }
         return CANCEL;
     }

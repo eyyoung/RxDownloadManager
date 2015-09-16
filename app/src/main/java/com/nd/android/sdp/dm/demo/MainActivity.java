@@ -113,6 +113,11 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         Toast.makeText(this, "Cancel", Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    public void onError(String pUrl, int httpState) {
+        Toast.makeText(this, "httpState:" + httpState, Toast.LENGTH_SHORT).show();
+    }
+
     public void onPause(View view) {
         DownloadManager.INSTANCE.pause(this, URL1);
     }
@@ -127,7 +132,9 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     public void onCheckMd5(View view) {
         File file = DownloadManager.INSTANCE.getDownloadedFile(this, "d41d8cd98f00b204e9800998ecf8427e");
-        Toast.makeText(this, "file.exists():" + file.exists(), Toast.LENGTH_SHORT).show();
+        if (file != null) {
+            Toast.makeText(this, "file.exists():" + file.exists(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -146,5 +153,13 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         } catch (InstantiationException e) {
             e.printStackTrace();
         }
+    }
+
+    public void onErrorUrl(View view) {
+        final DownloadOptions options = new DownloadOptionsBuilder()
+                .fileName("test2.apk")
+                .parentDirPath("/sdcard")
+                .build();
+        DownloadManager.INSTANCE.start(this, URL2, null, options);
     }
 }

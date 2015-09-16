@@ -38,6 +38,11 @@ public class DownloadsColumns implements BaseColumns {
     public static final String STATE = "state";
 
     /**
+     * Http状态码
+     */
+    public static final String HTTP_STATE = "http";
+
+    /**
      * 调用模块名称（区分是哪个模块调用的下载）
      */
     public static final String MODULE_NAME = "module_name";
@@ -58,15 +63,16 @@ public class DownloadsColumns implements BaseColumns {
     public static final String CREATE_TIME = "create_time";
 
 
-    public static final String DEFAULT_ORDER = TABLE_NAME + "." +_ID;
+    public static final String DEFAULT_ORDER = TABLE_NAME + "." + _ID;
 
     // @formatter:off
-    public static final String[] ALL_COLUMNS = new String[] {
+    public static final String[] ALL_COLUMNS = new String[]{
             _ID,
             URL,
             FILEPATH,
             MD5,
             STATE,
+            HTTP_STATE,
             MODULE_NAME,
             CURRENT_SIZE,
             TOTAL_SIZE,
@@ -81,6 +87,7 @@ public class DownloadsColumns implements BaseColumns {
             if (c.equals(FILEPATH) || c.contains("." + FILEPATH)) return true;
             if (c.equals(MD5) || c.contains("." + MD5)) return true;
             if (c.equals(STATE) || c.contains("." + STATE)) return true;
+            if (c.equals(HTTP_STATE) || c.contains("." + HTTP_STATE)) return true;
             if (c.equals(MODULE_NAME) || c.contains("." + MODULE_NAME)) return true;
             if (c.equals(CURRENT_SIZE) || c.contains("." + CURRENT_SIZE)) return true;
             if (c.equals(TOTAL_SIZE) || c.contains("." + TOTAL_SIZE)) return true;

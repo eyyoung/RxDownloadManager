@@ -94,6 +94,9 @@ public enum DownloadObserver {
                             case FINISHED:
                                 pAction.onComplete(pDownloadInfo.url);
                                 break;
+                            case ERROR:
+                                pAction.onError(pDownloadInfo.url, pDownloadInfo.getHttpState());
+                                break;
                         }
                     }
                 }, t -> {
@@ -110,6 +113,8 @@ public enum DownloadObserver {
         void onProgress(String pUrl, long current, long total);
 
         void onCancel(String pUrl);
+
+        void onError(String pUrl, int httpState);
     }
 
     /**

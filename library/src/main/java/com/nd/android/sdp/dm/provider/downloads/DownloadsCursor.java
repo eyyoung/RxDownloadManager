@@ -65,6 +65,12 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
         return res;
     }
 
+    @Nullable
+    public Integer getHttpState() {
+        Integer res = getIntegerOrNull(DownloadsColumns.HTTP_STATE);
+        return res;
+    }
+
     /**
      * 调用模块名称（区分是哪个模块调用的下载）
      * Can be {@code null}.
