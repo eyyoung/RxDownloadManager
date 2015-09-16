@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            ListActivity.start(this);
             return true;
         }
 
@@ -105,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
         if (pUrl.equals(URL1)) {
             mPb.setProgress((int) (current * 100 / total));
         }
-        Log.d("MainActivity", (current + " " + total));
     }
 
     @Override

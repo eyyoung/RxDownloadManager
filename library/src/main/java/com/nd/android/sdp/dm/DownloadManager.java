@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
+import android.text.TextUtils;
 
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
@@ -21,6 +22,7 @@ import java.io.File;
  * The Download manager.
  *
  * @author Young
+ * @date $date
  */
 public enum DownloadManager {
 
@@ -51,7 +53,10 @@ public enum DownloadManager {
      * @param pMd5
      * @author Young
      */
-    public void start(Context pContext, String url, String pMd5, DownloadOptions pDownloadOptions) {
+    public void start(@NonNull Context pContext,
+                      @NonNull String url,
+                      @Nullable String pMd5,
+                      @NonNull DownloadOptions pDownloadOptions) {
         DownloadService.start(pContext, url, pMd5, pDownloadOptions);
     }
 
@@ -61,7 +66,7 @@ public enum DownloadManager {
      * @param pLisener the lisener
      * @author Young
      */
-    public void registerDownloadListener(Context pContext, DownloadObserver.OnDownloadLisener pLisener) {
+    public void registerDownloadListener(@NonNull Context pContext, @NonNull DownloadObserver.OnDownloadLisener pLisener) {
         DownloadObserver.INSTANCE.init(pContext.getContentResolver());
         DownloadObserver.INSTANCE.registerProgressListener(pLisener);
     }
@@ -72,7 +77,7 @@ public enum DownloadManager {
      * @param pLisener the lisener
      * @author Young
      */
-    public void unregisterDownloadListener(DownloadObserver.OnDownloadLisener pLisener) {
+    public void unregisterDownloadListener(@NonNull DownloadObserver.OnDownloadLisener pLisener) {
         DownloadObserver.INSTANCE.unregisterProgressListener(pLisener);
     }
 
@@ -82,7 +87,7 @@ public enum DownloadManager {
      * @param url the url
      * @author Young
      */
-    public void cancel(Context pContext, String url) {
+    public void cancel(@NonNull Context pContext, @NonNull String url) {
         DownloadService.cancel(pContext, url);
     }
 
@@ -92,7 +97,7 @@ public enum DownloadManager {
      * @param url the url
      * @author Young
      */
-    public void pause(Context pContext, @NonNull String url) {
+    public void pause(@NonNull Context pContext, @NonNull String url) {
         DownloadService.pause(pContext, url);
     }
 
@@ -104,7 +109,7 @@ public enum DownloadManager {
      * @return 返回空为无此md5文件
      */
     @Nullable
-    public File getDownloadedFile(Context pContext, String pMd5) {
+    public File getDownloadedFile(@NonNull Context pContext, @NonNull String pMd5) {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.md5(pMd5);
         downloadsSelection.orderById(true);
@@ -132,9 +137,9 @@ public enum DownloadManager {
      * @return
      */
     @NonNull
-    public ArrayMap<String, IDownloadInfo> getDownloadInfos(Context pContext,
-                                                            Class<? extends IDownloadInfo> pClass,
-                                                            String... url) throws IllegalAccessException, InstantiationException {
+    public ArrayMap<String, IDownloadInfo> getDownloadInfos(@NonNull Context pContext,
+                                                            @NonNull Class<? extends IDownloadInfo> pClass,
+                                                            @NonNull String... url) throws IllegalAccessException, InstantiationException {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.urlContains(url);
         downloadsSelection.orderById(true);
@@ -155,6 +160,41 @@ public enum DownloadManager {
         }
         cursor.close();
         return downloadInfos;
+    }
+
+    /**
+     * 获取某个Url的下载信息
+     *
+     * @param pContext context
+     * @param pClass
+     * @param url
+     * @return the download info
+     * @throws IllegalAccessException the illegal access exception
+     * @throws InstantiationException the instantiation exception
+     */
+    public IDownloadInfo getDownloadInfo(@NonNull Context pContext,
+                                         @NonNull Class<? extends IDownloadInfo> pClass,
+                                         @NonNull String url) throws IllegalAccessException, InstantiationException {
+        if (TextUtils.isEmpty(url)) {
+            return null;
+        }
+        DownloadsSelection downloadsSelection = new DownloadsSelection();
+        downloadsSelection.urlContains(url);
+        downloadsSelection.orderById(true);
+        IDownloadInfo downloadInfo = pClass.newInstance();
+        final DownloadsCursor cursor = downloadsSelection.query(pContext, DownloadsColumns.ALL_COLUMNS);
+        if (cursor.getCount() == 0) {
+            return downloadInfo;
+        }
+        cursor.moveToFirst();
+        downloadInfo.setCurrentSize(cursor.getCurrentSize());
+        downloadInfo.setTotalSize(cursor.getTotalSize());
+        downloadInfo.setFilePath(cursor.getFilepath());
+        downloadInfo.setMd5(cursor.getMd5());
+        downloadInfo.setState(State.fromInt(cursor.getState()));
+        downloadInfo.setUrl(cursor.getUrl());
+        cursor.close();
+        return downloadInfo;
     }
 
 }

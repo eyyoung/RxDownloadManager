@@ -104,8 +104,11 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 }
                 final DownloadsCursor query = mDownloadPresenter.query(url);
                 query.moveToFirst();
+                openAction.open(this, query.getFilepath());
                 query.close();
                 cancelNotify(url);
+                break;
+            default:
                 break;
         }
         return START_NOT_STICKY;

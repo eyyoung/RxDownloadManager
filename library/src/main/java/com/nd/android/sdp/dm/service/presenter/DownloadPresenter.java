@@ -174,7 +174,7 @@ public class DownloadPresenter {
                             contentValues.putCreateTime(new Date());
                             contentValues.update(mContentResolver, downloadsSelection);
                         } else {
-                            cancelDownload(pUrl);
+                            updateState(pUrl, State.ERROR);
                         }
                         e.printStackTrace();
                         mUriSubscriptionMap.remove(pUrl);
@@ -330,7 +330,8 @@ public class DownloadPresenter {
                     if (extraForDownloader == null) {
                         extraForDownloader = new HashMap<>();
                     }
-                    extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
+//                    extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
+                    extraForDownloader.put("Range", "bytes=" + currentSize + "-");
                 }
                 // 开始下载
                 Class<? extends Downloader> downloaderClass = pDownloadOptions.getDownloader();
@@ -430,8 +431,15 @@ public class DownloadPresenter {
         final Subscription subscription = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
             subscription.unsubscribe();
-            updateState(pUrl, State.PAUSING);
             Log.d("DownloadPresenter", "pause");
+        }
+        final DownloadsCursor query = query(pUrl);
+        query.moveToFirst();
+        if (query.getCount() > 0 && query.getState() == State.DOWNLOADING.getValue()) {
+            updateState(pUrl, State.PAUSING);
+        }
+        if (query != null) {
+            query.close();
         }
     }
 
