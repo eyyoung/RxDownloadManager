@@ -222,7 +222,7 @@ public class DownloadPresenter {
      *
      * @author Young
      */
-    public Observable<BaseDownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
+    private Observable<BaseDownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
         return Observable
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions))
@@ -410,7 +410,7 @@ public class DownloadPresenter {
      * @param pDownloadOptions
      * @return
      */
-    private String getDownloadUrl(String pUrl, DownloadOptions pDownloadOptions) {
+    public static String getDownloadUrl(String pUrl, DownloadOptions pDownloadOptions) {
         final HashMap<String, String> urlParams = pDownloadOptions.getUrlParams();
         if (urlParams != null && urlParams.size() > 0) {
             Uri.Builder b = Uri.parse(pUrl).buildUpon();
@@ -469,10 +469,12 @@ public class DownloadPresenter {
     public void pauseAll() {
         final Iterator<String> iterator = mUriSubscriptionMap.keySet().iterator();
         while (iterator.hasNext()) {
-            final Subscription subscription = mUriSubscriptionMap.get(iterator.next());
+            final String pUrl = iterator.next();
+            final Subscription subscription = mUriSubscriptionMap.get(pUrl);
             if (subscription != null && subscription.isUnsubscribed()) {
                 subscription.unsubscribe();
             }
+            updateState(pUrl, State.CANCEL);
         }
         mUriSubscriptionMap.clear();
     }

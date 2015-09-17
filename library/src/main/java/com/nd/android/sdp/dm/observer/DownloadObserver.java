@@ -5,6 +5,7 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 
@@ -42,7 +43,7 @@ public enum DownloadObserver {
         }
     }
 
-    final private ContentObserver mContentObserver = new ContentObserver(new Handler()) {
+    final private ContentObserver mContentObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);

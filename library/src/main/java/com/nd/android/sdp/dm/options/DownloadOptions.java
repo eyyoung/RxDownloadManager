@@ -34,7 +34,7 @@ public class DownloadOptions implements Serializable {
 
     private HashMap<String, String> mUrlParams;
 
-    public DownloadOptions(HashMap<String, String> pExtraForDownloader,
+    DownloadOptions(HashMap<String, String> pExtraForDownloader,
                            Class<? extends Downloader> pDownloader,
                            String pFileName,
                            String pParentDirPath,

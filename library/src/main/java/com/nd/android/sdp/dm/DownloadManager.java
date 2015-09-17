@@ -57,6 +57,7 @@ public enum DownloadManager {
                       @NonNull String url,
                       @Nullable String pMd5,
                       @NonNull DownloadOptions pDownloadOptions) {
+        // TODO: 2015/9/17 需要增加文件已经下载完成的判断逻辑
         DownloadService.start(pContext, url, pMd5, pDownloadOptions);
     }
 
