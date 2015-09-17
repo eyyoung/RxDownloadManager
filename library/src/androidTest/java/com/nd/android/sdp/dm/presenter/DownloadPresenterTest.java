@@ -10,6 +10,7 @@ import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
+import com.nd.android.sdp.dm.provider.DownloadSQLiteOpenHelper;
 import com.nd.android.sdp.dm.service.presenter.DownloadPresenter;
 import com.nd.android.sdp.dm.state.State;
 
@@ -57,6 +58,7 @@ public class DownloadPresenterTest {
     @Test
     public void testAddTask() throws InstantiationException, IllegalAccessException, InterruptedException {
         // 测试有没有添加到数据库来确认有添加任务
+        clearDataBase();
         final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions downloadOptions = new DownloadOptionsBuilder()
@@ -89,6 +91,7 @@ public class DownloadPresenterTest {
 
     private void clearDataBase() {
         // 清楚数据库方法，保证测试数据的一致性
+        mContext.deleteDatabase(DownloadSQLiteOpenHelper.DATABASE_FILE_NAME);
     }
 
     /**
