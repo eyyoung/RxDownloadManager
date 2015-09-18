@@ -1,5 +1,6 @@
 package com.nd.android.sdp.dm.demo;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +15,7 @@ import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
+import com.nd.android.sdp.dm.options.OpenAction;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 
@@ -69,16 +71,21 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
                     .fileName("test.apk")
                     .parentDirPath("/sdcard")
                     .urlParam("ignore", "test")
-                    .openAction((pContext, filePath) -> {
-                        File file = new File(filePath);
-                        Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                    })
+                    .openAction(TestOpnAction.class)
                     .needNotificationBar(true)
                     .build();
             DownloadManager.INSTANCE.start(this, URL1, options);
             mIsPause = false;
         }
 
+    }
+
+    public static class TestOpnAction implements OpenAction {
+        @Override
+        public void open(Context pContext, String filePath) {
+            File file = new File(filePath);
+            Toast.makeText(pContext, file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onStop(View view) {

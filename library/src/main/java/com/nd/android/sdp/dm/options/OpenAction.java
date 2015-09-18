@@ -2,14 +2,12 @@ package com.nd.android.sdp.dm.options;
 
 import android.content.Context;
 
-import java.io.Serializable;
-
 /**
  * 打开操作接口
  *
  * @author Young
  */
-public interface OpenAction extends Serializable {
+public interface OpenAction {
 
     /**
      * 打开操作

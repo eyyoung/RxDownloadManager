@@ -11,7 +11,7 @@ public class DownloadOptionsBuilder {
     private String mModuleName = "sdp_common";
     private boolean mNeedNotificationBar = false;
     private String mFileName;
-    private OpenAction mOpenAction;
+    private Class<? extends OpenAction> mOpenAction;
     private HashMap<String, String> mUrlParams = new HashMap<>();
 
     /**
@@ -87,7 +87,7 @@ public class DownloadOptionsBuilder {
      * @param pOpenAction
      * @return
      */
-    public DownloadOptionsBuilder openAction(OpenAction pOpenAction) {
+    public DownloadOptionsBuilder openAction(Class<? extends OpenAction> pOpenAction) {
         mOpenAction = pOpenAction;
         return this;
     }

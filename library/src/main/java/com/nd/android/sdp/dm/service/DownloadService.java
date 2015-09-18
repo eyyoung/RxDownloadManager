@@ -38,7 +38,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     private DownloadPresenter mDownloadPresenter;
     private NotificationManager mNotifyManager;
     private final ArrayMap<String, NotificationCompat.Builder> mNotificationHashMap = new ArrayMap<>();
-    private final ArrayMap<String, OpenAction> mOpenActionArrayMap = new ArrayMap<>();
+    private final ArrayMap<String, Class<? extends OpenAction>> mOpenActionArrayMap = new ArrayMap<>();
 
     @Override
     public void onCreate() {
@@ -98,15 +98,22 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 mDownloadPresenter.pauseDownload(url);
                 break;
             case OPEN:
-                final OpenAction openAction = (OpenAction) intent.getSerializableExtra(PARAM_OPEN_ACTION);
-                if (openAction == null) {
+                cancelNotify(url);
+                final Class<? extends OpenAction> openActionClass = (Class<? extends OpenAction>) intent.getSerializableExtra(PARAM_OPEN_ACTION);
+                if (openActionClass == null) {
                     break;
                 }
-                final DownloadsCursor query = mDownloadPresenter.query(url);
-                query.moveToFirst();
-                openAction.open(this, query.getFilepath());
-                query.close();
-                cancelNotify(url);
+                try {
+                    final OpenAction openAction = openActionClass.newInstance();
+                    final DownloadsCursor query = mDownloadPresenter.query(url);
+                    query.moveToFirst();
+                    openAction.open(this, query.getFilepath());
+                    query.close();
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
                 break;
             default:
                 break;

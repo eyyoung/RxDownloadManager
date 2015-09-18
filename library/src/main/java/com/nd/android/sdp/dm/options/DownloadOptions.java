@@ -30,18 +30,18 @@ public class DownloadOptions implements Serializable {
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
 
-    private OpenAction mOpenAction;
+    private Class<? extends OpenAction> mOpenAction;
 
     private HashMap<String, String> mUrlParams;
 
     DownloadOptions(HashMap<String, String> pExtraForDownloader,
-                           Class<? extends Downloader> pDownloader,
-                           String pFileName,
-                           String pParentDirPath,
-                           String pModuleName,
-                           OpenAction pOpenAction,
-                           HashMap<String, String> pUrlParams,
-                           boolean pNeedNotificationBar) {
+                    Class<? extends Downloader> pDownloader,
+                    String pFileName,
+                    String pParentDirPath,
+                    String pModuleName,
+                    Class<? extends OpenAction> pOpenAction,
+                    HashMap<String, String> pUrlParams,
+                    boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
@@ -76,12 +76,12 @@ public class DownloadOptions implements Serializable {
         return mNeedNotificationBar;
     }
 
-    public OpenAction getOpenAction() {
+    public Class<? extends OpenAction> getOpenAction() {
         return mOpenAction;
     }
 
     @NonNull
-    public HashMap<String,String> getUrlParams() {
+    public HashMap<String, String> getUrlParams() {
         return mUrlParams;
     }
 
