@@ -58,6 +58,12 @@ public enum DownloadManager {
                       @Nullable String pMd5,
                       @NonNull DownloadOptions pDownloadOptions) {
         // TODO: 2015/9/17 需要增加文件已经下载完成的判断逻辑
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
+        if (pDownloadOptions == null) {
+            return;
+        }
         DownloadService.start(pContext, url, pMd5, pDownloadOptions);
     }
 
@@ -89,6 +95,9 @@ public enum DownloadManager {
      * @author Young
      */
     public void cancel(@NonNull Context pContext, @NonNull String url) {
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
         DownloadService.cancel(pContext, url);
     }
 
@@ -99,6 +108,9 @@ public enum DownloadManager {
      * @author Young
      */
     public void pause(@NonNull Context pContext, @NonNull String url) {
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
         DownloadService.pause(pContext, url);
     }
 
