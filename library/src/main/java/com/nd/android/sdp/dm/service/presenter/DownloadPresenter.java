@@ -12,6 +12,7 @@ import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.exception.DownloadHttpException;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
+import com.nd.android.sdp.dm.options.TmpFileNameGenerator;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
@@ -45,8 +46,8 @@ import rx.schedulers.Schedulers;
  */
 public class DownloadPresenter {
 
-    private static final int DOWNLOAD_TIMEOUT = 20;  // 下载无数据传输超时
-    private static final int RETRY_COUNT = 3; // 重试次数
+    private static final int DOWNLOAD_TIMEOUT = 500;  // 下载无数据传输超时
+    private static final int RETRY_COUNT = 5; // 重试次数
     private static final int RETRY_TIME_OUT = 2000; // 重试超时
     final protected ContentResolver mContentResolver;
 
@@ -290,24 +291,22 @@ public class DownloadPresenter {
                 DownloadsCursor cursor = null;
                 try {
                     DownloadsSelection downloadsSelection = new DownloadsSelection();
-                    downloadsSelection.md5(pMd5.toLowerCase());
+                    downloadsSelection.addRaw("md5=? and state=?", pMd5.toLowerCase(), State.FINISHED.getValue());
                     downloadsSelection.orderById(true);
                     cursor = downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
                     if (cursor.getCount() != 0) {
                         // 将该任务直接索引到旧任务的相同文件路径
                         cursor.moveToFirst();
-                        if (cursor.getState() == State.FINISHED.getValue()) {
-                            // 判断文件是否存在
-                            String filepath = cursor.getFilepath();
-                            File file = new File(filepath);
-                            final File destFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
-                            if (file.exists()) {
-                                // TODO: 2015/9/15 监听拷贝，传递进度
-                                IoUtils.copyFile(file, destFile);
-                                updateState(pUrl, State.FINISHED);
-                                subscriber.onCompleted();
-                                return;
-                            }
+                        // 判断文件是否存在
+                        String filepath = cursor.getFilepath();
+                        File file = new File(filepath);
+                        final File destFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
+                        if (file.exists()) {
+                            // TODO: 2015/9/15 监听拷贝，传递进度
+                            IoUtils.copyFile(file, destFile);
+                            updateState(pUrl, State.FINISHED);
+                            subscriber.onCompleted();
+                            return;
                         }
                     }
                 } catch (IOException e) {
@@ -337,13 +336,11 @@ public class DownloadPresenter {
         return Observable.create(new Observable.OnSubscribe<BaseDownloadInfo>() {
             @Override
             public void call(final Subscriber<? super BaseDownloadInfo> pSubscriber) {
+                // 先拼出假的，最终重命名会判重处理
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
-                // md5如果相同的话不会走到这里
-                // 下载文件冲突处理
-                ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
-                downloadFile = conflictStragedy.getRepeatFileName(downloadFile);
-                final File tmpFile = new File(downloadFile.getAbsolutePath() + ".tmp");
-                final String filePath = downloadFile.getAbsolutePath();
+                final TmpFileNameGenerator tmpFileNameGenerator = pDownloadOptions.getTmpFileNameGenerator();
+                String tmpKeyName = tmpFileNameGenerator.generate(pUrl);
+                final File tmpFile = new File(pDownloadOptions.getParentDirPath(), tmpKeyName);
                 long currentSize = 0;
                 HashMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();
                 if (tmpFile.exists()) {
@@ -373,7 +370,7 @@ public class DownloadPresenter {
                                 BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
                                         State.DOWNLOADING,
                                         null,
-                                        filePath,
+                                        downloadFile.getAbsolutePath(),
                                         current,
                                         total);
                                 pSubscriber.onNext(downloadInfoInner);
@@ -381,7 +378,11 @@ public class DownloadPresenter {
                             return !isCanceled;
                         });
                     } finally {
-                        if (loaded && tmpFile.renameTo(downloadFile)) {
+                        // 真实判重冲突重命名处理
+                        ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
+                        File realDownloadFile = conflictStragedy.getRepeatFileName(downloadFile);
+                        final String filePath = realDownloadFile.getAbsolutePath();
+                        if (loaded && tmpFile.renameTo(realDownloadFile)) {
                             String fileMd5 = null;
                             try {
                                 fileMd5 = MD5Utils.getFileMd5(filePath);
@@ -413,7 +414,7 @@ public class DownloadPresenter {
                     BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
                             State.ERROR,
                             null,
-                            filePath,
+                            downloadFile.getAbsolutePath(),
                             0,
                             0);
                     downloadInfoInner.httpState = e.getHttpCode();

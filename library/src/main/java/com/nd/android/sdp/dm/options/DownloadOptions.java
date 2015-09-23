@@ -15,6 +15,7 @@ import java.util.HashMap;
 public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
+    private static TmpFileNameGenerator sDefaultTmpFileNameGenerator = new Md5FileNameGenerator();
 
     private HashMap<String, String> mExtraForDownloader;
 
@@ -29,6 +30,8 @@ public class DownloadOptions implements Serializable {
     private boolean mNeedNotificationBar;
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
+
+    private TmpFileNameGenerator mTmpFileNameGenerator = sDefaultTmpFileNameGenerator;
 
     private Class<? extends OpenAction> mOpenAction;
 
@@ -85,6 +88,12 @@ public class DownloadOptions implements Serializable {
         return mUrlParams;
     }
 
+    @NonNull
+    public TmpFileNameGenerator getTmpFileNameGenerator() {
+        return mTmpFileNameGenerator;
+    }
+
+    @NonNull
     public ConflictStragedy getConflictStragedy() {
         return mConflictStragedy;
     }

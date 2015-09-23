@@ -55,7 +55,7 @@ uploadArchives {
                 repository(url: "http://nexus.sdp.nd/nexus/content/repositories/android-3rd/") {
                     authentication(userName: mavenUser, password: mavenPassword)
                 }
-                pom.version = "0.1.10"
+                pom.version = "0.1.11"
                 pom.artifactId = "downloadmanager"
                 pom.groupId = "com.nd.android.sdp.common"
             }

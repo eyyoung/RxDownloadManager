@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
                 .fileName("test2.apk")
                 .parentDirPath("/sdcard")
                 .build();
-        DownloadManager.INSTANCE.start(this, URL2, "d41d8cd98f00b204e9800998ecf8427e", options);
+        DownloadManager.INSTANCE.start(this, URL2, "714ff9d8f511424a3a6096988201844e", options);
     }
 
     public void onCheckMd5(View view) {

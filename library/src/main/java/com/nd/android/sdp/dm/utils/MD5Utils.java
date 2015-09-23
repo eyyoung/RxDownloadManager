@@ -1,9 +1,8 @@
 package com.nd.android.sdp.dm.utils;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.DigestInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -13,26 +12,30 @@ import java.security.NoSuchAlgorithmException;
 public class MD5Utils {
 
     public static String getFileMd5(String filePath) throws NoSuchAlgorithmException, IOException {
-        DigestInputStream dis = null;
-        FileInputStream inputStream = null;
+        InputStream inputStream = null;
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            inputStream = new FileInputStream(new File(filePath));
-            dis = new DigestInputStream(inputStream, md);
-            byte[] digest = md.digest();
-            StringBuffer hexString = new StringBuffer();
-            for (int i = 0; i < digest.length; i++) {
-                String hex = Integer.toHexString(0xFF & digest[i]);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
+            inputStream = new FileInputStream(filePath);
+            byte[] buffer = new byte[1024];
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            int numRead = 0;
+            while (numRead != -1) {
+                numRead = inputStream.read(buffer);
+                if (numRead > 0)
+                    digest.update(buffer, 0, numRead);
             }
-            return hexString.toString();
+            byte[] md5Bytes = digest.digest();
+            return convertHashToString(md5Bytes);
         } finally {
             IoUtils.closeSilently(inputStream);
-            IoUtils.closeSilently(dis);
         }
+    }
+
+    private static String convertHashToString(byte[] md5Bytes) {
+        String returnVal = "";
+        for (int i = 0; i < md5Bytes.length; i++) {
+            returnVal += Integer.toString((md5Bytes[i] & 0xff) + 0x100, 16).substring(1);
+        }
+        return returnVal.toLowerCase();
     }
 
 }

@@ -133,9 +133,11 @@ public enum DownloadManager {
             if (cursor.getCurrentSize().equals(cursor.getTotalSize())) {
                 // 判断文件是否存在
                 String filepath = cursor.getFilepath();
-                File file = new File(filepath);
-                if (file.exists()) {
-                    return file;
+                if(!TextUtils.isEmpty(filepath)) {
+                    File file = new File(filepath);
+                    if (file.exists()) {
+                        return file;
+                    }
                 }
             }
         }

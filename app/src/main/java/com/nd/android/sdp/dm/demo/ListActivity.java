@@ -136,7 +136,7 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
                 if (downloadInfos.size() == 0 ||
                         downloadInfos.get(downloadUrls[index]).getState() != State.DOWNLOADING) {
                     DownloadOptions downloadOptions = new DownloadOptionsBuilder()
-                            .fileName("file" + index + ".txt")
+                            .fileName("file.txt")
                             .needNotificationBar(true)
                             .parentDirPath("/sdcard/test/")
                             .build();
