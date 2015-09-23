@@ -16,6 +16,8 @@ public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
 
+    private static DefaultTempFileNameStragedy sDefaultTempFileNameStragedy =new DefaultTempFileNameStragedy();
+
     private HashMap<String, String> mExtraForDownloader;
 
     private Class<? extends Downloader> mDownloader;
@@ -29,6 +31,8 @@ public class DownloadOptions implements Serializable {
     private boolean mNeedNotificationBar;
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
+
+    private TempFileNameStragedy mTempFileStragedy =sDefaultTempFileNameStragedy;
 
     private OpenAction mOpenAction;
 
@@ -87,5 +91,9 @@ public class DownloadOptions implements Serializable {
 
     public ConflictStragedy getConflictStragedy() {
         return mConflictStragedy;
+    }
+
+    public TempFileNameStragedy getmTempFileStragedy(){
+        return mTempFileStragedy;
     }
 }

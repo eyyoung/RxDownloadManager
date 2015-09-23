@@ -12,6 +12,7 @@ import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.exception.DownloadHttpException;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
+import com.nd.android.sdp.dm.options.TempFileNameStragedy;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
@@ -321,7 +322,8 @@ public class DownloadPresenter {
                 // 下载文件冲突处理
                 ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
                 downloadFile = conflictStragedy.getRepeatFileName(downloadFile);
-                final File tmpFile = new File(downloadFile.getAbsolutePath() + ".tmp");
+                TempFileNameStragedy tmpNameStragedy =pDownloadOptions.getmTempFileStragedy();
+                final File tmpFile =tmpNameStragedy.getTempFileName(downloadFile);
                 final String filePath = downloadFile.getAbsolutePath();
                 long currentSize = 0;
                 HashMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();
