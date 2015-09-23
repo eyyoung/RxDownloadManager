@@ -1,5 +1,7 @@
 package com.nd.android.sdp.dm.downloader;
 
+import android.text.TextUtils;
+
 import com.nd.android.okhttp.OkHttpClient;
 import com.nd.android.okhttp.Request;
 import com.nd.android.okhttp.Response;
@@ -42,6 +44,11 @@ public class BaseDownloader implements Downloader {
 
     @Override
     public long getContentLength() {
-        return Long.parseLong(mResponse.header("Content-Length"));
+        final String header = mResponse.header("Content-Length");
+        if (TextUtils.isEmpty(header)) {
+            return 0;
+        } else {
+            return Long.parseLong(header);
+        }
     }
 }

@@ -93,8 +93,9 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
                 "http://ww2.sinaimg.cn/bmiddle/a71cfe56gw1ew49kdx66lg208c07nx1i.gif",
                 "http://www.texts.io/Texts-0.23.5.msi",
                 "http://down.360safe.com/360ap/360freeap_whole_setup_5.3.0.3010.exe",
-                "http://betacs.101.com/v0.1/download?dentryId=0c14337f-439a-4ee5-8b42-e8f5cb374f38",
-                "http://betacs.101.com/v0.1/download?dentryId=60d34463-af82-4292-8f78-aa59e4d6e431&session=cc76fc38-d59b-41fb-82ca-07086cd06349"
+                "http://betacs.101.com/v0.1/download?dentryId=5f5e5491-b5be-4c28-bc5f-d13145cb526e",
+                "http://betacs.101.com/v0.1/download?dentryId=60d34463-af82-4292-8f78-aa59e4d6e431&session=cc76fc38-d59b-41fb-82ca-07086cd06349",
+                "http://betacs.101.com/v0.1/download?dentryId=9333a7c1-af75-47e3-b088-90448f647e8a&session=a8e6e248-b9f8-4aea-8b11-3b3d7fe15e49"
         };
 
         @Override
@@ -135,7 +136,7 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
                 if (downloadInfos.size() == 0 ||
                         downloadInfos.get(downloadUrls[index]).getState() != State.DOWNLOADING) {
                     DownloadOptions downloadOptions = new DownloadOptionsBuilder()
-                            .fileName("file" + index + ".test")
+                            .fileName("file" + index + ".txt")
                             .needNotificationBar(true)
                             .parentDirPath("/sdcard/test/")
                             .build();

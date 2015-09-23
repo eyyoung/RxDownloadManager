@@ -36,6 +36,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 /**
@@ -44,7 +45,9 @@ import rx.schedulers.Schedulers;
  */
 public class DownloadPresenter {
 
-    private static final int DOWNLOAD_TIMEOUT = 20;
+    private static final int DOWNLOAD_TIMEOUT = 20;  // 下载无数据传输超时
+    private static final int RETRY_COUNT = 3; // 重试次数
+    private static final int RETRY_TIME_OUT = 2000; // 重试超时
     final protected ContentResolver mContentResolver;
 
     final private Map<String, Subscription> mUriSubscriptionMap = new HashMap<>();
@@ -227,11 +230,30 @@ public class DownloadPresenter {
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions))
                 .flatMap(s -> getDownloadInfoStream(pUrl, pDownloadOptions))
+                .retry(judgeRetry())
                 .buffer(1000, TimeUnit.MILLISECONDS)
                 .filter(downloadInfoInners -> downloadInfoInners != null && downloadInfoInners.size() > 0)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
                 .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
                 .map(writeStateToDb(pDownloadOptions));
+    }
+
+    @NonNull
+    private Func2<Integer, Throwable, Boolean> judgeRetry() {
+        return (integer, throwable) -> {
+            if (integer > RETRY_COUNT) {
+                return false;
+            }
+            if (throwable instanceof IOException) {
+                try {
+                    Thread.sleep(RETRY_TIME_OUT);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            return false;
+        };
     }
 
     /**
@@ -274,8 +296,7 @@ public class DownloadPresenter {
                     if (cursor.getCount() != 0) {
                         // 将该任务直接索引到旧任务的相同文件路径
                         cursor.moveToFirst();
-                        if (cursor.getState() == State.FINISHED.getValue()
-                                && cursor.getCurrentSize().equals(cursor.getTotalSize())) {
+                        if (cursor.getState() == State.FINISHED.getValue()) {
                             // 判断文件是否存在
                             String filepath = cursor.getFilepath();
                             File file = new File(filepath);

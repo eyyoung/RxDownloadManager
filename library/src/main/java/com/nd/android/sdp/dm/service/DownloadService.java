@@ -145,7 +145,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(android.R.drawable.stat_sys_download)
                         .setContentTitle(getString(R.string.downloadmanager_downloading, pFileName))
-                        .setProgress(100, 0, false)
+                        .setProgress(100, 0, true)
                         .addAction(R.drawable.downloadmanager_ic_block,
                                 getString(R.string.downloadmanager_cancel), piCancel)
                         .setOngoing(true)
@@ -223,8 +223,6 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         if (builder != null) {
             if (total != 0) {
                 builder.setProgress(100, (int) (current * 100 / total), false);
-            } else {
-                builder.setProgress(0, 0, true);
             }
             mNotifyManager.notify(Math.abs(pUrl.hashCode()), builder.build());
         }
