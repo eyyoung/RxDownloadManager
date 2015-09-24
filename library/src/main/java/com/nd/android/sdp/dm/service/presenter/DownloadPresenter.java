@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -60,17 +61,16 @@ public class DownloadPresenter {
         mContentResolver = pContentResolver;
     }
 
-    public DownloadsCursor query(String url) {
+    public DownloadsCursor query(@NonNull String url) {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.url(url);
         downloadsSelection.orderById(true);
-        final DownloadsCursor query = downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
-        return query;
+        return downloadsSelection.query(mContentResolver, DownloadsColumns.ALL_COLUMNS);
     }
 
     private long insertOrUpdate(@NonNull String pUrl,
                                 @NonNull String pFilePath,
-                                @NonNull String pMd5,
+                                @Nullable String pMd5,
                                 @NonNull String pModuleName,
                                 State state,
                                 long pCurrentSize,
@@ -92,12 +92,6 @@ public class DownloadPresenter {
             final Uri insert = contentValues.insert(mContentResolver);
             return ContentUris.parseId(insert);
         }
-    }
-
-    private void delete(String url) {
-        DownloadsSelection downloadsSelection = new DownloadsSelection();
-        downloadsSelection.url(url);
-        downloadsSelection.delete(mContentResolver);
     }
 
     private void updateState(String pUrl, State pState) {
@@ -127,9 +121,10 @@ public class DownloadPresenter {
      * @param md5              文件md5(用于秒下)
      * @param pDownloadOptions the download options
      * @return 是否添加成功
-     * @author Young
      */
-    public boolean addTask(@NonNull final String pUrl, String md5, @NonNull final DownloadOptions pDownloadOptions) {
+    public boolean addTask(@NonNull final String pUrl,
+                           @Nullable String md5,
+                           @NonNull final DownloadOptions pDownloadOptions) {
         final Subscription cachedSubscription = mUriSubscriptionMap.get(pUrl);
         if (cachedSubscription != null && !cachedSubscription.isUnsubscribed()) {
             // 已经在做，不做
@@ -196,8 +191,7 @@ public class DownloadPresenter {
     /**
      * 判断任务是否存在
      *
-     * @param pUrl
-     * @return
+     * @param pUrl url
      */
     private boolean checkExists(@NonNull String pUrl) {
         final DownloadsCursor query = query(pUrl);
@@ -260,8 +254,8 @@ public class DownloadPresenter {
     /**
      * 写入数据库
      *
-     * @param pDownloadOptions
-     * @return
+     * @param pDownloadOptions download options
+     * @return Func1
      */
     @NonNull
     private Func1<BaseDownloadInfo, BaseDownloadInfo> writeStateToDb(@NonNull DownloadOptions pDownloadOptions) {
@@ -438,7 +432,7 @@ public class DownloadPresenter {
      * @param pDownloadOptions
      * @return
      */
-    public static String getDownloadUrl(String pUrl, DownloadOptions pDownloadOptions) {
+    public static String getDownloadUrl(@NonNull String pUrl, @NonNull DownloadOptions pDownloadOptions) {
         final HashMap<String, String> urlParams = pDownloadOptions.getUrlParams();
         if (urlParams != null && urlParams.size() > 0) {
             Uri.Builder b = Uri.parse(pUrl).buildUpon();
@@ -455,7 +449,7 @@ public class DownloadPresenter {
      *
      * @param pUrl
      */
-    public void pauseDownload(String pUrl) {
+    public void pauseDownload(@NonNull String pUrl) {
         final Subscription subscription = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
             subscription.unsubscribe();
@@ -476,7 +470,7 @@ public class DownloadPresenter {
      *
      * @param pUrl
      */
-    public void cancelDownload(String pUrl) {
+    public void cancelDownload(@NonNull String pUrl) {
         final Subscription subscription = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
             subscription.unsubscribe();

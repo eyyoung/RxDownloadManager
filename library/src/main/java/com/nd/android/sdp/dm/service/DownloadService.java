@@ -7,9 +7,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.util.ArrayMap;
+import android.text.TextUtils;
 
 import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.R;
@@ -20,6 +22,7 @@ import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
 import com.nd.android.sdp.dm.service.presenter.DownloadPresenter;
 
 import java.io.File;
+import java.io.Serializable;
 
 
 /**
@@ -64,10 +67,13 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
      *
      * @param context          the context
      * @param pUrl             the p url
-     * @param md5
+     * @param md5              md5
      * @param pDownloadOptions the p download options  @author Young
      */
-    public static void start(Context context, String pUrl, String md5, DownloadOptions pDownloadOptions) {
+    public static void start(@NonNull Context context,
+                             @NonNull String pUrl,
+                             @Nullable String md5,
+                             @NonNull DownloadOptions pDownloadOptions) {
         Intent starter = new Intent(context, DownloadService.class);
         starter.putExtra(PARAM_URL, pUrl);
         starter.putExtra(PARAM_OPTIONS, pDownloadOptions);
@@ -75,7 +81,6 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         starter.putExtra(PARAM_MD5, md5);
         context.startService(starter);
     }
-
 
     @Nullable
     @Override
@@ -87,36 +92,51 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     public int onStartCommand(Intent intent, int flags, int startId) {
         String url = intent.getStringExtra(PARAM_URL);
         OPER oper = (OPER) intent.getSerializableExtra(PARAM_OPER);
+        if (oper == null) {
+            return START_NOT_STICKY;
+        }
         switch (oper) {
             case START:
+                if (TextUtils.isEmpty(url)) {
+                    return START_NOT_STICKY;
+                }
                 DownloadOptions downloadOptions = (DownloadOptions) intent.getSerializableExtra(PARAM_OPTIONS);
                 startTask(intent, url, downloadOptions);
                 break;
             case CANCEL:
+                if (TextUtils.isEmpty(url)) {
+                    return START_NOT_STICKY;
+                }
                 mDownloadPresenter.cancelDownload(url);
                 break;
             case PAUSE:
+                if (TextUtils.isEmpty(url)) {
+                    return START_NOT_STICKY;
+                }
                 mDownloadPresenter.pauseDownload(url);
                 break;
             case PAUSE_ALL:
                 mDownloadPresenter.pauseAll();
                 break;
             case OPEN:
-                cancelNotify(url);
-                final Class<? extends OpenAction> openActionClass = (Class<? extends OpenAction>) intent.getSerializableExtra(PARAM_OPEN_ACTION);
-                if (openActionClass == null) {
-                    break;
+                if (TextUtils.isEmpty(url)) {
+                    return START_NOT_STICKY;
                 }
-                try {
-                    final OpenAction openAction = openActionClass.newInstance();
-                    final DownloadsCursor query = mDownloadPresenter.query(url);
-                    query.moveToFirst();
-                    openAction.open(this, query.getFilepath());
-                    query.close();
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                cancelNotify(url);
+                final Serializable actionExtra = intent.getSerializableExtra(PARAM_OPEN_ACTION);
+                if (actionExtra != null && actionExtra instanceof OpenAction) {
+                    final Class<? extends OpenAction> openActionClass = (Class<? extends OpenAction>) actionExtra;
+                    try {
+                        final OpenAction openAction = openActionClass.newInstance();
+                        final DownloadsCursor query = mDownloadPresenter.query(url);
+                        query.moveToFirst();
+                        openAction.open(this, query.getFilepath());
+                        query.close();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
                 }
                 break;
             default:
@@ -160,14 +180,14 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         mNotificationHashMap.put(pUrl, builder);
     }
 
-    public static void cancel(Context pContext, String pUrl) {
+    public static void cancel(@NonNull Context pContext, @NonNull String pUrl) {
         Intent starter = new Intent(pContext, DownloadService.class);
         starter.putExtra(PARAM_URL, pUrl);
         starter.putExtra(PARAM_OPER, OPER.CANCEL);
         pContext.startService(starter);
     }
 
-    public static void pause(Context pContext, String pUrl) {
+    public static void pause(@NonNull Context pContext, @NonNull String pUrl) {
         Intent starter = new Intent(pContext, DownloadService.class);
         starter.putExtra(PARAM_URL, pUrl);
         starter.putExtra(PARAM_OPER, OPER.PAUSE);
@@ -256,7 +276,7 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         query.close();
     }
 
-    public static void pauseAll(Context context) {
+    public static void pauseAll(@NonNull Context context) {
         Intent starter = new Intent(context, DownloadService.class);
         starter.putExtra(PARAM_OPER, OPER.PAUSE_ALL);
         context.startService(starter);
