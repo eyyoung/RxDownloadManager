@@ -3,6 +3,7 @@ package com.nd.android.sdp.dm.presenter;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.nd.android.sdp.dm.DownloadListenerAdapter;
@@ -27,6 +28,7 @@ import rx.subjects.PublishSubject;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -559,6 +561,38 @@ public class DownloadPresenterTest {
 
     }
 
+    /**
+     * 同事开启两个具有相同文件名的任务
+     *
+     * @throws Exception the exception
+     */
+    @Test
+    public void testStartTwoTaskWithSameName() throws Exception {
+        clearTestDir();
+        clearDataBase();
+        TestCompleteOnDownloadLisener testOnDownloadLisener = new TestCompleteOnDownloadLisener(DOWNLOAD_URLS[1]);
+        TestCompleteOnDownloadLisener testOnDownloadLisener2 = new TestCompleteOnDownloadLisener(DOWNLOAD_URLS[0]);
+        DownloadManager.INSTANCE.registerDownloadListener(mContext, testOnDownloadLisener);
+        DownloadManager.INSTANCE.registerDownloadListener(mContext, testOnDownloadLisener2);
+        DownloadOptions options = new DownloadOptionsBuilder()
+                .fileName("test.test2")
+                .parentDirPath("/sdcard/test/unittest2")
+                .build();
+        mPresenter.addTask(DOWNLOAD_URLS[1], null, options);
+        mPresenter.addTask(DOWNLOAD_URLS[0], null, options);
+        TestSubscriber testSubscriber = new TestSubscriber();
+        testOnDownloadLisener.getPublishSubject().subscribe(testSubscriber);
+        TestSubscriber testSubscriber2 = new TestSubscriber();
+        testOnDownloadLisener2.getPublishSubject().subscribe(testSubscriber2);
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertCompleted();
+        testSubscriber2.awaitTerminalEvent();
+        testSubscriber2.assertCompleted();
+        final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[1]);
+        final IDownloadInfo downloadInfo2 = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[0]);
+        assertNotEquals(downloadInfo.getFilePath(), downloadInfo2.getFilePath());
+    }
+
     private static class TestOnDownloadLisener implements DownloadObserver.OnDownloadLisener {
         boolean hasProgress = false;// 用于确认是否出发onProgress
         boolean isOnPause = false;
@@ -604,6 +638,11 @@ public class DownloadPresenterTest {
     private static class TestCompleteOnDownloadLisener extends DownloadListenerAdapter {
 
         PublishSubject<String> mPublishSubject = PublishSubject.create();
+        private String mUrl;
+
+        public TestCompleteOnDownloadLisener(String url) {
+            mUrl = url;
+        }
 
         public TestCompleteOnDownloadLisener() {
         }
@@ -611,17 +650,35 @@ public class DownloadPresenterTest {
         @Override
         public void onError(String pUrl, int httpState) {
             super.onError(pUrl, httpState);
-            mPublishSubject.onError(new Throwable());
+            if (TextUtils.isEmpty(pUrl)) {
+                mPublishSubject.onError(new Exception());
+            } else {
+                if (pUrl.equals(mUrl)) {
+                    mPublishSubject.onError(new Exception());
+                }
+            }
         }
 
         @Override
         public void onProgress(String pUrl, long current, long total) {
-            mPublishSubject.onNext(pUrl);
+            if (TextUtils.isEmpty(pUrl)) {
+                mPublishSubject.onNext(pUrl);
+            } else {
+                if (pUrl.equals(mUrl)) {
+                    mPublishSubject.onNext(pUrl);
+                }
+            }
         }
 
         @Override
         public void onComplete(String pUrl) {
-            mPublishSubject.onCompleted();
+            if (TextUtils.isEmpty(pUrl)) {
+                mPublishSubject.onCompleted();
+            } else {
+                if (pUrl.equals(mUrl)) {
+                    mPublishSubject.onCompleted();
+                }
+            }
         }
 
         public PublishSubject<String> getPublishSubject() {
