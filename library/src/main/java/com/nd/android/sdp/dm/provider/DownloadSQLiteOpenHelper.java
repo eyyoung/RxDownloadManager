@@ -37,6 +37,10 @@ public class DownloadSQLiteOpenHelper extends SQLiteOpenHelper {
             + ", CONSTRAINT unique_name UNIQUE (url) ON CONFLICT REPLACE"
             + " );";
 
+    public static final String SQL_CREATE_MD5_INDEX = "CREATE INDEX 'md5_index' ON '" + DownloadsColumns.TABLE_NAME + "' ('md5');";
+    public static final String SQL_CREATE_URL_INDEX = "CREATE INDEX 'url_index' ON '" + DownloadsColumns.TABLE_NAME + "' ('url');";
+    public static final String SQL_CREATE_MD5_STATE_INDEX = "CREATE INDEX 'mdt_state_index' ON '" + DownloadsColumns.TABLE_NAME + "' (md5,state);";
+
     // @formatter:on
 
     public static DownloadSQLiteOpenHelper getInstance(Context context) {
@@ -92,6 +96,9 @@ public class DownloadSQLiteOpenHelper extends SQLiteOpenHelper {
         if (BuildConfig.DEBUG) Log.d(TAG, "onCreate");
         mOpenHelperCallbacks.onPreCreate(mContext, db);
         db.execSQL(SQL_CREATE_TABLE_DOWNLOADS);
+        db.execSQL(SQL_CREATE_MD5_INDEX);
+        db.execSQL(SQL_CREATE_MD5_STATE_INDEX);
+        db.execSQL(SQL_CREATE_URL_INDEX);
         mOpenHelperCallbacks.onPostCreate(mContext, db);
     }
 

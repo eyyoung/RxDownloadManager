@@ -80,6 +80,10 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver.
 
     }
 
+    public void onStopAll(View view) {
+        DownloadManager.INSTANCE.pauseAll(this);
+    }
+
     public static class TestOpnAction implements OpenAction {
         @Override
         public void open(Context pContext, String filePath) {

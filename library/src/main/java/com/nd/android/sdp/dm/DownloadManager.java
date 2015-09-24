@@ -133,7 +133,7 @@ public enum DownloadManager {
             if (cursor.getCurrentSize().equals(cursor.getTotalSize())) {
                 // 判断文件是否存在
                 String filepath = cursor.getFilepath();
-                if(!TextUtils.isEmpty(filepath)) {
+                if (!TextUtils.isEmpty(filepath)) {
                     File file = new File(filepath);
                     if (file.exists()) {
                         return file;
@@ -210,6 +210,16 @@ public enum DownloadManager {
         downloadInfo.setUrl(cursor.getUrl());
         cursor.close();
         return downloadInfo;
+    }
+
+    /**
+     * Pause all.
+     *
+     * @param pContext the p context
+     * @author Young
+     */
+    public void pauseAll(@NonNull Context pContext) {
+        DownloadService.pauseAll(pContext);
     }
 
 }

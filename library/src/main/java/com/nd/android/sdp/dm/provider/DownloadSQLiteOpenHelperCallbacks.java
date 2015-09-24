@@ -32,5 +32,8 @@ public class DownloadSQLiteOpenHelperCallbacks {
     public void onUpgrade(final Context context, final SQLiteDatabase db, final int oldVersion, final int newVersion) {
         if (BuildConfig.DEBUG) Log.d(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
         // Insert your upgrading code here.
+        db.execSQL(DownloadSQLiteOpenHelper.SQL_CREATE_MD5_INDEX);
+        db.execSQL(DownloadSQLiteOpenHelper.SQL_CREATE_MD5_STATE_INDEX);
+        db.execSQL(DownloadSQLiteOpenHelper.SQL_CREATE_URL_INDEX);
     }
 }

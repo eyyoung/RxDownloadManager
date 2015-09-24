@@ -46,7 +46,7 @@ import rx.schedulers.Schedulers;
  */
 public class DownloadPresenter {
 
-    private static final int DOWNLOAD_TIMEOUT = 500;  // 下载无数据传输超时
+    private static final int DOWNLOAD_TIMEOUT = 20;  // 下载无数据传输超时
     private static final int RETRY_COUNT = 5; // 重试次数
     private static final int RETRY_TIME_OUT = 2000; // 重试超时
     final protected ContentResolver mContentResolver;
@@ -304,7 +304,13 @@ public class DownloadPresenter {
                         if (file.exists()) {
                             // TODO: 2015/9/15 监听拷贝，传递进度
                             IoUtils.copyFile(file, destFile);
-                            updateState(pUrl, State.FINISHED);
+                            insertOrUpdate(pUrl,
+                                    destFile.getAbsolutePath(),
+                                    pMd5,
+                                    pDownloadOptions.getModuleName(),
+                                    State.FINISHED,
+                                    destFile.length(),
+                                    destFile.length());
                             subscriber.onCompleted();
                             return;
                         }
@@ -493,10 +499,10 @@ public class DownloadPresenter {
         while (iterator.hasNext()) {
             final String pUrl = iterator.next();
             final Subscription subscription = mUriSubscriptionMap.get(pUrl);
-            if (subscription != null && subscription.isUnsubscribed()) {
+            if (subscription != null && !subscription.isUnsubscribed()) {
                 subscription.unsubscribe();
             }
-            updateState(pUrl, State.CANCEL);
+            updateState(pUrl, State.PAUSING);
         }
         mUriSubscriptionMap.clear();
     }

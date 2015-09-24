@@ -55,7 +55,8 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         START,
         CANCEL,
         PAUSE,
-        OPEN
+        OPEN,
+        PAUSE_ALL
     }
 
     /**
@@ -96,6 +97,9 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 break;
             case PAUSE:
                 mDownloadPresenter.pauseDownload(url);
+                break;
+            case PAUSE_ALL:
+                mDownloadPresenter.pauseAll();
                 break;
             case OPEN:
                 cancelNotify(url);
@@ -250,5 +254,11 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
         Notification notification = builder.build();
         mNotifyManager.notify(Math.abs(pUrl.hashCode()), notification);
         query.close();
+    }
+
+    public static void pauseAll(Context context) {
+        Intent starter = new Intent(context, DownloadService.class);
+        starter.putExtra(PARAM_OPER, OPER.PAUSE_ALL);
+        context.startService(starter);
     }
 }
