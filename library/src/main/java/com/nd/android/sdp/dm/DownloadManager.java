@@ -205,6 +205,9 @@ public enum DownloadManager {
         downloadInfo.setCurrentSize(cursor.getCurrentSize());
         downloadInfo.setTotalSize(cursor.getTotalSize());
         downloadInfo.setFilePath(cursor.getFilepath());
+        if (cursor.getHttpState() != null) {
+            downloadInfo.setHttpState(cursor.getHttpState());
+        }
         downloadInfo.setMd5(cursor.getMd5());
         downloadInfo.setState(State.fromInt(cursor.getState()));
         downloadInfo.setUrl(cursor.getUrl());

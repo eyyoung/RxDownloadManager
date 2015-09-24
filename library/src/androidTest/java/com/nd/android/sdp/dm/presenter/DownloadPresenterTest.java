@@ -1,6 +1,7 @@
 package com.nd.android.sdp.dm.presenter;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
@@ -14,6 +15,7 @@ import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.DownloadSQLiteOpenHelper;
+import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.service.presenter.DownloadPresenter;
 import com.nd.android.sdp.dm.state.State;
 
@@ -22,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.UUID;
 
 import rx.observers.TestSubscriber;
 import rx.subjects.PublishSubject;
@@ -48,6 +51,9 @@ public class DownloadPresenterTest {
             "http://down.360safe.com/360ap/360freeap_whole_setup_5.3.0.3010.exe",
             "http://betacs.101.com/v0.1/download?dentryId=0c14337f-439a-4ee5-8b42-e8f5cb374f38"
     };
+
+    public static final String WRONG_URL = "http://www.texts.io/Texts-0.23.53.msi";
+
 
     private Context mContext;
     private DownloadPresenter mPresenter;
@@ -94,6 +100,7 @@ public class DownloadPresenterTest {
      */
     @Test
     public void testAddTaskRepeat() throws InterruptedException {
+        clearDataBase();
         final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions downloadOptions = new DownloadOptionsBuilder()
@@ -109,8 +116,11 @@ public class DownloadPresenterTest {
     }
 
     private void clearDataBase() {
+        mPresenter.pauseAll();
         // 清楚数据库方法，保证测试数据的一致性
-        mContext.deleteDatabase(DownloadSQLiteOpenHelper.DATABASE_FILE_NAME);
+        final DownloadSQLiteOpenHelper downloadSQLiteOpenHelper = DownloadSQLiteOpenHelper.getInstance(mContext);
+        final SQLiteDatabase writableDatabase = downloadSQLiteOpenHelper.getWritableDatabase();
+        writableDatabase.execSQL("delete from " + DownloadsColumns.TABLE_NAME);
     }
 
     /**
@@ -146,6 +156,8 @@ public class DownloadPresenterTest {
                 }
             }
         }
+        // http://stackoverflow.com/questions/11539657/open-failed-ebusy-device-or-resource-busy
+        dir.renameTo(new File(dir.getParent(), UUID.randomUUID().toString()));
         return dir.delete();
     }
 
@@ -168,9 +180,10 @@ public class DownloadPresenterTest {
         //传入的MD5不存在
         final boolean addTask = mPresenter.addTask(DOWNLOAD_URLS[0], "12345678990a", options);
         assertTrue(addTask);
-        Thread.sleep(1000);
+        Thread.sleep(2000);
         // 有进度
         assertTrue(downloadLisener.hasProgress);
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -233,7 +246,6 @@ public class DownloadPresenterTest {
         }
     }
 
-    @Test
     public void testMd5ExistAndFileExist() throws Exception {
         clearDataBase();
         // 清空文件夹
@@ -310,6 +322,7 @@ public class DownloadPresenterTest {
             downloadLisener.getPublishSubject().subscribe(testSubscriber);
             testSubscriber.awaitTerminalEvent();
             testSubscriber.assertCompleted();
+            DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
         }
         {
             final TestCompleteOnDownloadLisener downloadLisener = new TestCompleteOnDownloadLisener();
@@ -327,6 +340,7 @@ public class DownloadPresenterTest {
             assertEquals(downloadInfo.getState(), State.FINISHED);
             String finishName = new File(downloadInfo.getFilePath()).getName();
             assertFalse(options.getFileName().equals(finishName));
+            DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
         }
     }
 
@@ -340,6 +354,7 @@ public class DownloadPresenterTest {
     @Test
     public void testAddTaskForResume() throws Exception {
         clearDataBase();
+        clearTestDir();
         final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions options = new DownloadOptionsBuilder()
@@ -352,7 +367,7 @@ public class DownloadPresenterTest {
         Thread.sleep(2500);
         //暂停任务
         mPresenter.pauseDownload(DOWNLOAD_URLS[4]);
-        Thread.sleep(500);
+        Thread.sleep(2000);
         //暂停0.5秒后保存
         long beforePauseProgress = downloadLisener.progress;
         assertTrue(downloadLisener.isOnPause);
@@ -369,7 +384,7 @@ public class DownloadPresenterTest {
         long afterPauseProgress = downloadLisener.progress;
         assertTrue(downloadLisener.isOnProgress);
         assertTrue(afterPauseProgress > beforePauseProgress);
-
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -381,22 +396,25 @@ public class DownloadPresenterTest {
     @Test
     public void testAddTaskForCalMd5() throws Exception {
         // 下载完成文件是否有MD5值
-
         clearDataBase();
-        final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
+        clearTestDir();
+        final TestCompleteOnDownloadLisener downloadLisener = new TestCompleteOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions options = new DownloadOptionsBuilder()
                 .fileName("test.test2")
                 .parentDirPath("/sdcard/test/unittest3")
                 .build();
 
-        mPresenter.addTask(DOWNLOAD_URLS[0], null, options);
-        Thread.sleep(10000);
-        final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[0]);
+        TestSubscriber testSubscriber = new TestSubscriber();
+        downloadLisener.getPublishSubject().subscribe(testSubscriber);
+        mPresenter.addTask(DOWNLOAD_URLS[1], null, options);
+        testSubscriber.awaitTerminalEvent();
+        final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[1]);
         assertEquals(downloadInfo.getState(), State.FINISHED);
         String md5 = downloadInfo.getMd5();
         Log.i("MD5:", md5);
         assertTrue(md5 != null && !md5.equals(""));
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -407,23 +425,28 @@ public class DownloadPresenterTest {
      */
     @Test
     public void testAddTaskWrongUrl() throws Exception {
+        clearDataBase();
+        clearTestDir();
         // 观察者是否出发onError
-        final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
+        final TestCompleteOnDownloadLisener downloadLisener = new TestCompleteOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions options = new DownloadOptionsBuilder()
                 .fileName("test.test2")
                 .parentDirPath("/sdcard/test/unittest2")
                 .build();
 
-        mPresenter.addTask("http://dsfsbai.com/dasfasdfds", null, options);
-        Thread.sleep(1000);
-        final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, "http://dsfsbai.com/dasfasdfds");
+        mPresenter.addTask(WRONG_URL, null, options);
+        TestSubscriber testSubscriber = new TestSubscriber();
+        downloadLisener.getPublishSubject().subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertError(Throwable.class);
+        final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, WRONG_URL);
         final State state = downloadInfo.getState();
         assertEquals(state, State.ERROR);
-        assertTrue(downloadLisener.isOnError);
+        assertEquals(downloadInfo.getHttpState(), 404);
         // onError的httpState是否正常？
-        assertEquals(downloadLisener.errorState, 0);
 //        Log.i("ErrorState",downloadLisener.errorState+"");
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -444,6 +467,7 @@ public class DownloadPresenterTest {
         String url = DownloadPresenter.getDownloadUrl(DOWNLOAD_URLS[4], options);
         Log.i("DownloadUrl", url);
         assertTrue(url != null && !url.equals(""));
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -458,6 +482,7 @@ public class DownloadPresenterTest {
         // 检查onPause是否触发
         // 触发onPause后不再触发onProgress
         clearDataBase();
+        clearTestDir();
         final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         //初始化下载信息
@@ -481,7 +506,7 @@ public class DownloadPresenterTest {
         //是否调用了onPause
         assertTrue(downloadLisener.isOnPause);
         //1秒后查看调用了onPause以后是否还会再调用onProgress
-        Thread.sleep(1000);
+        Thread.sleep(2000);
         assertFalse(downloadLisener.isOnProgress);
         // 移除监听
         DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
@@ -500,6 +525,7 @@ public class DownloadPresenterTest {
     @Test
     public void testCancelTask() throws Exception {
         clearDataBase();
+        clearTestDir();
         final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         //初始化下载信息
@@ -524,6 +550,7 @@ public class DownloadPresenterTest {
         final State state = downloadInfo.getState();
         //是否是取消状态
         assertEquals(state, State.CANCEL);
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
     /**
@@ -534,6 +561,8 @@ public class DownloadPresenterTest {
      */
     @Test
     public void testPauseAll() throws Exception {
+        clearDataBase();
+        clearTestDir();
         final TestOnDownloadLisener onDownloadLisener = new TestOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, onDownloadLisener);
 
@@ -558,6 +587,7 @@ public class DownloadPresenterTest {
 
         //是否还在触发onProgress
         assertFalse(onDownloadLisener.isOnProgress);
+        DownloadManager.INSTANCE.unregisterDownloadListener(onDownloadLisener);
 
     }
 
@@ -591,6 +621,8 @@ public class DownloadPresenterTest {
         final IDownloadInfo downloadInfo = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[1]);
         final IDownloadInfo downloadInfo2 = DownloadManager.INSTANCE.getDownloadInfo(mContext, BaseDownloadInfo.class, DOWNLOAD_URLS[0]);
         assertNotEquals(downloadInfo.getFilePath(), downloadInfo2.getFilePath());
+        DownloadManager.INSTANCE.unregisterDownloadListener(testOnDownloadLisener);
+        DownloadManager.INSTANCE.unregisterDownloadListener(testOnDownloadLisener2);
     }
 
     private static class TestOnDownloadLisener implements DownloadObserver.OnDownloadLisener {
@@ -650,7 +682,7 @@ public class DownloadPresenterTest {
         @Override
         public void onError(String pUrl, int httpState) {
             super.onError(pUrl, httpState);
-            if (TextUtils.isEmpty(pUrl)) {
+            if (TextUtils.isEmpty(mUrl)) {
                 mPublishSubject.onError(new Exception());
             } else {
                 if (pUrl.equals(mUrl)) {
@@ -661,7 +693,7 @@ public class DownloadPresenterTest {
 
         @Override
         public void onProgress(String pUrl, long current, long total) {
-            if (TextUtils.isEmpty(pUrl)) {
+            if (TextUtils.isEmpty(mUrl)) {
                 mPublishSubject.onNext(pUrl);
             } else {
                 if (pUrl.equals(mUrl)) {
@@ -672,7 +704,7 @@ public class DownloadPresenterTest {
 
         @Override
         public void onComplete(String pUrl) {
-            if (TextUtils.isEmpty(pUrl)) {
+            if (TextUtils.isEmpty(mUrl)) {
                 mPublishSubject.onCompleted();
             } else {
                 if (pUrl.equals(mUrl)) {

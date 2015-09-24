@@ -1,5 +1,6 @@
 package com.nd.android.sdp.dm.options;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -8,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
  * 默认临时文件命名策略
  * Created by Administrator on 2015/9/18.
  */
-public class Md5TempFileNameStragedy implements TempFileNameStragedy{
+public class Md5TempFileNameStragedy implements TempFileNameStragedy, Serializable {
 
     private static final String HASH_ALGORITHM = "MD5";
     private static final int RADIX = 36;
