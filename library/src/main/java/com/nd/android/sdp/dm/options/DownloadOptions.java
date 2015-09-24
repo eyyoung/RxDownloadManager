@@ -34,7 +34,7 @@ public class DownloadOptions implements Serializable {
 
     private TempFileNameStragedy mTempFileStragedy =sDefaultTempFileNameStragedy;
 
-    private OpenAction mOpenAction;
+    private Class<? extends OpenAction> mOpenAction;
 
     private HashMap<String, String> mUrlParams;
 
@@ -43,7 +43,7 @@ public class DownloadOptions implements Serializable {
                            String pFileName,
                            String pParentDirPath,
                            String pModuleName,
-                           OpenAction pOpenAction,
+                           Class<? extends OpenAction> pOpenAction,
                            HashMap<String, String> pUrlParams,
                            boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
@@ -80,7 +80,7 @@ public class DownloadOptions implements Serializable {
         return mNeedNotificationBar;
     }
 
-    public OpenAction getOpenAction() {
+    public Class<? extends OpenAction> getOpenAction() {
         return mOpenAction;
     }
 
