@@ -4,14 +4,19 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Md5FileNameGenerator implements TmpFileNameGenerator {
+/**
+ * 默认临时文件命名策略
+ * Created by Administrator on 2015/9/18.
+ */
+public class Md5TempFileNameStragedy implements TempFileNameStragedy{
+
     private static final String HASH_ALGORITHM = "MD5";
     private static final int RADIX = 36;
 
-    public Md5FileNameGenerator() {
+    public Md5TempFileNameStragedy() {
     }
 
-    public String generate(String imageUri) {
+    public String getTempFileName(String imageUri) {
         byte[] md5 = this.getMD5(imageUri.getBytes());
         BigInteger bi = (new BigInteger(md5)).abs();
         return bi.toString(RADIX);

@@ -15,7 +15,8 @@ import java.util.HashMap;
 public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
-    private static TmpFileNameGenerator sDefaultTmpFileNameGenerator = new Md5FileNameGenerator();
+
+    private static DefaultTempFileNameStragedy sDefaultTempFileNameStragedy =new DefaultTempFileNameStragedy();
 
     private HashMap<String, String> mExtraForDownloader;
 
@@ -31,20 +32,20 @@ public class DownloadOptions implements Serializable {
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
 
-    private TmpFileNameGenerator mTmpFileNameGenerator = sDefaultTmpFileNameGenerator;
+    private TempFileNameStragedy mTempFileStragedy =sDefaultTempFileNameStragedy;
 
-    private Class<? extends OpenAction> mOpenAction;
+    private OpenAction mOpenAction;
 
     private HashMap<String, String> mUrlParams;
 
     DownloadOptions(HashMap<String, String> pExtraForDownloader,
-                    Class<? extends Downloader> pDownloader,
-                    String pFileName,
-                    String pParentDirPath,
-                    String pModuleName,
-                    Class<? extends OpenAction> pOpenAction,
-                    HashMap<String, String> pUrlParams,
-                    boolean pNeedNotificationBar) {
+                           Class<? extends Downloader> pDownloader,
+                           String pFileName,
+                           String pParentDirPath,
+                           String pModuleName,
+                           OpenAction pOpenAction,
+                           HashMap<String, String> pUrlParams,
+                           boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
@@ -79,22 +80,20 @@ public class DownloadOptions implements Serializable {
         return mNeedNotificationBar;
     }
 
-    public Class<? extends OpenAction> getOpenAction() {
+    public OpenAction getOpenAction() {
         return mOpenAction;
     }
 
     @NonNull
-    public HashMap<String, String> getUrlParams() {
+    public HashMap<String,String> getUrlParams() {
         return mUrlParams;
     }
 
-    @NonNull
-    public TmpFileNameGenerator getTmpFileNameGenerator() {
-        return mTmpFileNameGenerator;
-    }
-
-    @NonNull
     public ConflictStragedy getConflictStragedy() {
         return mConflictStragedy;
+    }
+
+    public TempFileNameStragedy getmTempFileStragedy(){
+        return mTempFileStragedy;
     }
 }
