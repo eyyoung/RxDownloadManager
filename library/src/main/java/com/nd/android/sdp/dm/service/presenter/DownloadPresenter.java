@@ -12,7 +12,7 @@ import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.exception.DownloadHttpException;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
-import com.nd.android.sdp.dm.options.TmpFileNameGenerator;
+import com.nd.android.sdp.dm.options.TempFileNameStragedy;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
@@ -344,8 +344,8 @@ public class DownloadPresenter {
             public void call(final Subscriber<? super BaseDownloadInfo> pSubscriber) {
                 // 先拼出假的，最终重命名会判重处理
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
-                final TmpFileNameGenerator tmpFileNameGenerator = pDownloadOptions.getTmpFileNameGenerator();
-                String tmpKeyName = tmpFileNameGenerator.generate(pUrl);
+                final TempFileNameStragedy tempFileNameStragedy = pDownloadOptions.getTempFileStragedy();
+                String tmpKeyName = tempFileNameStragedy.getTempFileName(pUrl);
                 final File tmpFile = new File(pDownloadOptions.getParentDirPath(), tmpKeyName);
                 long currentSize = 0;
                 HashMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();

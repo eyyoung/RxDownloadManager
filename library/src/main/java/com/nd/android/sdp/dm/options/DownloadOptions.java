@@ -16,7 +16,7 @@ public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
 
-    private static DefaultTempFileNameStragedy sDefaultTempFileNameStragedy =new DefaultTempFileNameStragedy();
+    private static Md5TempFileNameStragedy sDefaultTempFileNameStragedy =new Md5TempFileNameStragedy();
 
     private HashMap<String, String> mExtraForDownloader;
 
@@ -93,7 +93,7 @@ public class DownloadOptions implements Serializable {
         return mConflictStragedy;
     }
 
-    public TempFileNameStragedy getmTempFileStragedy(){
+    public TempFileNameStragedy getTempFileStragedy(){
         return mTempFileStragedy;
     }
 }
