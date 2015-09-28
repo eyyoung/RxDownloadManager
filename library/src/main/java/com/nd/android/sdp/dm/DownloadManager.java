@@ -74,7 +74,13 @@ public enum DownloadManager {
      * @author Young
      */
     public void registerDownloadListener(@NonNull Context pContext, @NonNull DownloadObserver.OnDownloadLisener pLisener) {
-        DownloadObserver.INSTANCE.init(pContext.getContentResolver());
+        if (pContext == null) {
+            throw new IllegalArgumentException();
+        }
+        if (pLisener == null) {
+            throw new IllegalArgumentException();
+        }
+        DownloadObserver.INSTANCE.init(pContext.getApplicationContext().getContentResolver());
         DownloadObserver.INSTANCE.registerProgressListener(pLisener);
     }
 
