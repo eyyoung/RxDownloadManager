@@ -30,7 +30,7 @@ public class DownloadProvider extends BaseContentProvider {
     private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
     public static void init(Context pContext) {
-        AUTHORITY = pContext.getPackageName() + ".dm.provider";
+        AUTHORITY = pContext.getPackageName() + ".provider";
         CONTENT_URI_BASE = "content://" + AUTHORITY;
         URI_MATCHER.addURI(AUTHORITY, DownloadsColumns.TABLE_NAME, URI_TYPE_DOWNLOADS);
         URI_MATCHER.addURI(AUTHORITY, DownloadsColumns.TABLE_NAME + "/#", URI_TYPE_DOWNLOADS_ID);

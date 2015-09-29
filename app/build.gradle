@@ -6,11 +6,12 @@ android {
     buildToolsVersion "22.0.1"
 
     defaultConfig {
-        applicationId "com.nd.android.sdp.dm"
+        applicationId "com.nd.android.sdp.dm.app"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        resValue "string", "downloadmanager_authorities", getApplicationId() + '.provider'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

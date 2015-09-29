@@ -13,7 +13,7 @@
 
         <provider
             android:name=".provider.DownloadProvider"
-            android:authorities="${applicationId}.dm.provider"
+            android:authorities="@string/downloadmanager_authorities"
             android:exported="false"/>
 
     </application>
