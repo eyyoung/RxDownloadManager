@@ -77,27 +77,29 @@ public enum DownloadObserver {
         subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(pDownloadInfo -> {
-                    for (OnDownloadLisener pAction : mProgressAction) {
-                        switch (pDownloadInfo.state) {
-                            case DOWNLOADING:
-                                if (pDownloadInfo.currentSize > 0) {
-                                    pAction.onProgress(pDownloadInfo.url,
-                                            pDownloadInfo.currentSize,
-                                            pDownloadInfo.totalSize);
-                                }
-                                break;
-                            case PAUSING:
-                                pAction.onPause(pDownloadInfo.url);
-                                break;
-                            case CANCEL:
-                                pAction.onCancel(pDownloadInfo.url);
-                                break;
-                            case FINISHED:
-                                pAction.onComplete(pDownloadInfo.url);
-                                break;
-                            case ERROR:
-                                pAction.onError(pDownloadInfo.url, pDownloadInfo.getHttpState());
-                                break;
+                    synchronized (mProgressAction) {
+                        for (OnDownloadLisener pAction : mProgressAction) {
+                            switch (pDownloadInfo.state) {
+                                case DOWNLOADING:
+                                    if (pDownloadInfo.currentSize > 0) {
+                                        pAction.onProgress(pDownloadInfo.url,
+                                                pDownloadInfo.currentSize,
+                                                pDownloadInfo.totalSize);
+                                    }
+                                    break;
+                                case PAUSING:
+                                    pAction.onPause(pDownloadInfo.url);
+                                    break;
+                                case CANCEL:
+                                    pAction.onCancel(pDownloadInfo.url);
+                                    break;
+                                case FINISHED:
+                                    pAction.onComplete(pDownloadInfo.url);
+                                    break;
+                                case ERROR:
+                                    pAction.onError(pDownloadInfo.url, pDownloadInfo.getHttpState());
+                                    break;
+                            }
                         }
                     }
                 }, t -> {
@@ -125,7 +127,9 @@ public enum DownloadObserver {
      * @author Young
      */
     public void registerProgressListener(OnDownloadLisener pLisener) {
-        mProgressAction.add(pLisener);
+        synchronized (mProgressAction) {
+            mProgressAction.add(pLisener);
+        }
     }
 
     /**
@@ -135,7 +139,9 @@ public enum DownloadObserver {
      * @author Young
      */
     public void unregisterProgressListener(OnDownloadLisener pLisener) {
-        mProgressAction.remove(pLisener);
+        synchronized (mProgressAction) {
+            mProgressAction.remove(pLisener);
+        }
     }
 
 }
