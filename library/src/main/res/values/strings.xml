@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="downloadmanager_downloading">正在下载%s...</string>
-    <string name="downloadmanager_cancel">取消</string>
-    <string name="downloadmanager_pause">暂停</string>
-    <string name="downloadmanager_download_complete_title">%s下载完成</string>
-    <string name="downloadmanager_download_complete_content">已保存至%s</string>
-    <string name="downloadmanager_download_failed_title">%s下载失败</string>
-    <string name="downloadmanager_download_failed_content">%s下载失败，请确认网络或下载地址是否正确</string>
+    <string name="downloadmanager_downloading">%s Downloading...</string>
+    <string name="downloadmanager_cancel">Cancel</string>
+    <string name="downloadmanager_pause">Pause</string>
+    <string name="downloadmanager_download_complete_title">%sDownload Complete</string>
+    <string name="downloadmanager_download_complete_content">Saved to %s</string>
+    <string name="downloadmanager_download_failed_title">%s Download failure</string>
+    <string name="downloadmanager_download_failed_content">%s Download failure,please check network</string>
 
 </resources>

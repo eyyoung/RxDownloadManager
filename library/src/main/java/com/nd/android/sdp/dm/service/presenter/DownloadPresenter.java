@@ -295,16 +295,18 @@ public class DownloadPresenter {
                         String filepath = cursor.getFilepath();
                         File file = new File(filepath);
                         final File destFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
+                        ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
+                        File realDownloadFile = conflictStragedy.getRepeatFileName(destFile);
                         if (file.exists()) {
                             // TODO: 2015/9/15 监听拷贝，传递进度
-                            IoUtils.copyFile(file, destFile);
+                            IoUtils.copyFile(file, realDownloadFile);
                             insertOrUpdate(pUrl,
-                                    destFile.getAbsolutePath(),
+                                    realDownloadFile.getAbsolutePath(),
                                     pMd5,
                                     pDownloadOptions.getModuleName(),
                                     State.FINISHED,
-                                    destFile.length(),
-                                    destFile.length());
+                                    realDownloadFile.length(),
+                                    realDownloadFile.length());
                             subscriber.onCompleted();
                             return;
                         }

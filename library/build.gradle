@@ -11,7 +11,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        resValue "string", "downloadmanager_authorities", 'com.nd.sdp.android.dm.provider'
+        resValue "string", "downloadmanager_authorities", 'com.nd.android.sdp.dm.test.provider'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -56,7 +56,7 @@ uploadArchives {
                 repository(url: "http://nexus.sdp.nd/nexus/content/repositories/android-3rd/") {
                     authentication(userName: mavenUser, password: mavenPassword)
                 }
-                pom.version = "0.1.18"
+                pom.version = "0.1.19"
                 pom.artifactId = "downloadmanager"
                 pom.groupId = "com.nd.android.sdp.common"
             }
