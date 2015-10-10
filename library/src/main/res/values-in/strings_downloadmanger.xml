@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="downloadmanager_downloading">Mengunduh%s...</string>
+    <string name="downloadmanager_cancel">Batal</string>
+    <string name="downloadmanager_pause">Tahan</string>
+    <string name="downloadmanager_download_complete_title">%s Selesai mengunduh</string>
+    <string name="downloadmanager_download_complete_content">Disimpan di %s</string>
+    <string name="downloadmanager_download_failed_title">%s gagal mengunduh</string>
+    <string name="downloadmanager_download_failed_content">%s Gagal mengunduh, Periksa jaringan dan URL berkas</string>
+
+</resources>
