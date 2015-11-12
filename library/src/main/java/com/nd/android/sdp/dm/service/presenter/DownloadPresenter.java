@@ -131,6 +131,13 @@ public class DownloadPresenter {
             return false;
         }
         if (checkExists(pUrl)) {
+            insertOrUpdate(pUrl,
+                    new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName()).getAbsolutePath(),
+                    md5,
+                    pDownloadOptions.getModuleName(),
+                    State.FINISHED,
+                    0,
+                    0);
             return false;
         }
         // 添加任务
@@ -399,6 +406,8 @@ public class DownloadPresenter {
                                     currentSize + downloader.getContentLength(),
                                     currentSize + downloader.getContentLength());
                             pSubscriber.onNext(downloadInfoInner);
+                        }else{
+                            throw new IOException();
                         }
                     }
                     pSubscriber.onCompleted();

@@ -115,6 +115,30 @@ public class DownloadPresenterTest {
         DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }
 
+    @Test
+    public void testAddTaskRepeatWhenFileExist() throws InterruptedException {
+        clearDataBase();
+        final TestCompleteOnDownloadLisener downloadLisener = new TestCompleteOnDownloadLisener();
+        DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
+        DownloadOptions downloadOptions = new DownloadOptionsBuilder()
+                .fileName("test.test")
+                .parentDirPath("/sdcard/test/unittest")
+                .build();
+        mPresenter.addTask(DOWNLOAD_URLS[2], null, downloadOptions);
+        //等待5秒再次添加任务
+        TestSubscriber<String> testSubscriber = new TestSubscriber<>();
+        downloadLisener.getPublishSubject().subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        // 有下载
+        assertTrue(testSubscriber.getOnNextEvents().size() > 0);
+        // 确保下载完成
+        testSubscriber.assertCompleted();
+        boolean isDown = mPresenter.addTask(DOWNLOAD_URLS[2], null, downloadOptions);
+        assertEquals(isDown, false);
+        DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
+    }
+
     private void clearDataBase() {
         mPresenter.pauseAll();
         // 清楚数据库方法，保证测试数据的一致性

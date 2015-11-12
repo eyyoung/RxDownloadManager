@@ -1,6 +1,7 @@
 package com.nd.android.sdp.dm;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
@@ -30,6 +31,7 @@ public enum DownloadManager {
 
     public void init(Context pContext) {
         DownloadProvider.init(pContext.getApplicationContext());
+        DownloadsColumns.CONTENT_URI = Uri.parse(DownloadProvider.CONTENT_URI_BASE + "/" + DownloadsColumns.TABLE_NAME);
     }
 
     /**

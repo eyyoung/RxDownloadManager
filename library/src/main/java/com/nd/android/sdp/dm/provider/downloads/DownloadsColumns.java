@@ -3,14 +3,12 @@ package com.nd.android.sdp.dm.provider.downloads;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
-import com.nd.android.sdp.dm.provider.DownloadProvider;
-
 /**
  * A human being which is part of a team.
  */
 public class DownloadsColumns implements BaseColumns {
     public static final String TABLE_NAME = "downloads";
-    public static final Uri CONTENT_URI = Uri.parse(DownloadProvider.CONTENT_URI_BASE + "/" + TABLE_NAME);
+    public static Uri CONTENT_URI;
 
     /**
      * Primary key.
