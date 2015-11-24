@@ -81,11 +81,9 @@ public enum DownloadObserver {
                         for (OnDownloadLisener pAction : mProgressAction) {
                             switch (pDownloadInfo.state) {
                                 case DOWNLOADING:
-                                    if (pDownloadInfo.currentSize > 0) {
-                                        pAction.onProgress(pDownloadInfo.url,
-                                                pDownloadInfo.currentSize,
-                                                pDownloadInfo.totalSize);
-                                    }
+                                    pAction.onProgress(pDownloadInfo.url,
+                                            pDownloadInfo.currentSize,
+                                            pDownloadInfo.totalSize);
                                     break;
                                 case PAUSING:
                                     pAction.onPause(pDownloadInfo.url);

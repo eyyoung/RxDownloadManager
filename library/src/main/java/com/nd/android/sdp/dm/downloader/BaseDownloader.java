@@ -9,8 +9,8 @@ import com.nd.android.sdp.dm.exception.DownloadHttpException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * The Base downloader.
@@ -22,7 +22,7 @@ public class BaseDownloader implements Downloader {
     private Response mResponse;
 
     @Override
-    public InputStream getStream(String imageUri, HashMap<String, String> extra) throws IOException, DownloadHttpException {
+    public InputStream getStream(String imageUri, Map<String, String> extra) throws IOException, DownloadHttpException {
         OkHttpClient client = new OkHttpClient();
         final Request.Builder builder = new Request.Builder().url(imageUri);
         if (extra != null) {

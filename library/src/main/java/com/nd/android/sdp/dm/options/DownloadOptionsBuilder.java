@@ -1,6 +1,7 @@
 package com.nd.android.sdp.dm.options;
 
 import com.nd.android.sdp.dm.downloader.Downloader;
+import com.nd.android.sdp.dm.processor.DataProcessor;
 
 import java.util.HashMap;
 
@@ -12,6 +13,7 @@ public class DownloadOptionsBuilder {
     private boolean mNeedNotificationBar = false;
     private String mFileName;
     private Class<? extends OpenAction> mOpenAction;
+    private DataProcessor mDataProcessor;
     private HashMap<String, String> mUrlParams = new HashMap<>();
 
     /**
@@ -22,6 +24,18 @@ public class DownloadOptionsBuilder {
      */
     public DownloadOptionsBuilder extraForDownloader(HashMap<String, String> pExtraForDownloader) {
         mExtraForDownloader = pExtraForDownloader;
+        return this;
+    }
+
+    /**
+     * 下载数据处理器
+     *
+     * @param dataProcessor the data processor
+     * @return the download options builder
+     * @author Young
+     */
+    public DownloadOptionsBuilder dataProcessor(DataProcessor dataProcessor) {
+        mDataProcessor = dataProcessor;
         return this;
     }
 
@@ -111,6 +125,7 @@ public class DownloadOptionsBuilder {
                 mFileName,
                 mParentDirPath,
                 mModuleName,
+                mDataProcessor,
                 mOpenAction,
                 mUrlParams,
                 mNeedNotificationBar);

@@ -5,6 +5,7 @@ import com.nd.android.sdp.dm.exception.DownloadHttpException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2015/9/10.
@@ -21,7 +22,7 @@ public interface Downloader {
      * @throws IOException                   if some I/O error occurs during getting image stream
      * @throws UnsupportedOperationException if image URI has unsupported scheme(protocol)
      */
-    InputStream getStream(String imageUri, HashMap<String, String> extra) throws IOException, DownloadHttpException;
+    InputStream getStream(String imageUri, Map<String, String> extra) throws IOException, DownloadHttpException;
 
     /**
      * 获取总长度

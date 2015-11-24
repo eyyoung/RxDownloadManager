@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.exception.DownloadHttpException;
@@ -16,6 +17,8 @@ import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.TempFileNameStragedy;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
+import com.nd.android.sdp.dm.processor.DataProcessor;
+import com.nd.android.sdp.dm.processor.DataProcessorListener;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsContentValues;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
@@ -26,7 +29,6 @@ import com.nd.android.sdp.dm.utils.MD5Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
@@ -349,66 +351,56 @@ public class DownloadPresenter {
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
                 final TempFileNameStragedy tempFileNameStragedy = pDownloadOptions.getTempFileStragedy();
                 String tmpKeyName = tempFileNameStragedy.getTempFileName(pUrl);
+                // 拼凑真实下载路径
+                String downloadUrl = getDownloadUrl(pUrl, pDownloadOptions);
                 final File tmpFile = new File(pDownloadOptions.getParentDirPath(), tmpKeyName);
-                long currentSize = 0;
-                HashMap<String, String> extraForDownloader = pDownloadOptions.getExtraForDownloader();
-                if (tmpFile.exists()) {
-                    currentSize = tmpFile.length();
-                    if (extraForDownloader == null) {
-                        extraForDownloader = new HashMap<>();
-                    }
-//                    extraForDownloader.put("RANGE", "bytes=" + currentSize + "-");
-                    extraForDownloader.put("Range", "bytes=" + currentSize + "-");
-                }
-                // 开始下载
-                Class<? extends Downloader> downloaderClass = pDownloadOptions.getDownloader();
-                if (downloaderClass == null) {
-                    downloaderClass = DEFAULT_DOWNLOADER;
-                }
-                final Downloader downloader;
                 try {
-                    downloader = downloaderClass.newInstance();
-                    // 拼凑真实下载路径
-                    String downloadUrl = getDownloadUrl(pUrl, pDownloadOptions);
-                    final InputStream downloaderStream = downloader.getStream(downloadUrl, extraForDownloader);
-                    boolean loaded = false;
-                    try {
-                        loaded = IoUtils.copyStreamToFile(downloaderStream, tmpFile, DEFAULT_BUFFER_SIZE, currentSize, downloader.getContentLength(), (current, total) -> {
-                            final boolean isCanceled = pSubscriber.isUnsubscribed();
-                            if (!isCanceled) {
-                                BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
-                                        State.DOWNLOADING,
-                                        null,
-                                        downloadFile.getAbsolutePath(),
-                                        current,
-                                        total);
-                                pSubscriber.onNext(downloadInfoInner);
-                            }
-                            return !isCanceled;
-                        });
-                    } finally {
-                        // 真实判重冲突重命名处理
-                        ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
-                        File realDownloadFile = conflictStragedy.getRepeatFileName(downloadFile);
-                        final String filePath = realDownloadFile.getAbsolutePath();
-                        if (loaded && tmpFile.renameTo(realDownloadFile)) {
-                            String fileMd5 = null;
-                            try {
-                                fileMd5 = MD5Utils.getFileMd5(filePath);
-                            } catch (NoSuchAlgorithmException e) {
-                                // 计算失败并不影响下载
-                                e.printStackTrace();
-                            }
-                            BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
-                                    State.FINISHED,
-                                    fileMd5,
-                                    filePath,
-                                    currentSize + downloader.getContentLength(),
-                                    currentSize + downloader.getContentLength());
-                            pSubscriber.onNext(downloadInfoInner);
-                        }else{
-                            throw new IOException();
+                    DataProcessor processor = pDownloadOptions.getDataProcessor();
+                    if (processor == null) {
+                        processor = DownloadManager.INSTANCE.getDataProcessor();
+                    }
+                    final boolean loaded = processor.processData(downloadUrl,
+                            tmpFile,
+                            pDownloadOptions.getDownloader(),
+                            pDownloadOptions.getExtraForDownloader(),
+                            new DataProcessorListener() {
+                                @Override
+                                public void onNotifyProgress(long progress, long total) {
+                                    BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
+                                            State.DOWNLOADING,
+                                            null,
+                                            downloadFile.getAbsolutePath(),
+                                            progress,
+                                            total);
+                                    pSubscriber.onNext(downloadInfoInner);
+                                }
+
+                                @Override
+                                public boolean isCanceled() {
+                                    return pSubscriber.isUnsubscribed();
+                                }
+                            });
+                    // 真实判重冲突重命名处理
+                    ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
+                    File realDownloadFile = conflictStragedy.getRepeatFileName(downloadFile);
+                    final String filePath = realDownloadFile.getAbsolutePath();
+                    if (loaded && tmpFile.renameTo(realDownloadFile)) {
+                        String fileMd5 = null;
+                        try {
+                            fileMd5 = MD5Utils.getFileMd5(filePath);
+                        } catch (NoSuchAlgorithmException e) {
+                            // 计算失败并不影响下载
+                            e.printStackTrace();
                         }
+                        BaseDownloadInfo downloadInfoInner = new BaseDownloadInfo(pUrl,
+                                State.FINISHED,
+                                fileMd5,
+                                filePath,
+                                realDownloadFile.length(),
+                                realDownloadFile.length());
+                        pSubscriber.onNext(downloadInfoInner);
+                    } else {
+                        throw new IOException();
                     }
                     pSubscriber.onCompleted();
                 } catch (InstantiationException e) {
@@ -431,6 +423,9 @@ public class DownloadPresenter {
                     downloadInfoInner.httpState = e.getHttpCode();
                     DownloadHttpException downloadHttpException = new DownloadHttpException(downloadInfoInner);
                     pSubscriber.onError(downloadHttpException);
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                    pSubscriber.onError(throwable);
                 }
             }
         });

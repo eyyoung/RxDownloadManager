@@ -61,7 +61,7 @@ public class DownloadPresenterTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DownloadManager.INSTANCE.init(mContext);
+        DownloadManager.INSTANCE.init(mContext, null);
         mPresenter = new DownloadPresenter(mContext.getContentResolver());
     }
 
@@ -73,7 +73,7 @@ public class DownloadPresenterTest {
     public void testAddTask() throws InstantiationException, IllegalAccessException, InterruptedException {
         // 测试有没有添加到数据库来确认有添加任务
         clearDataBase();
-        final TestOnDownloadLisener downloadLisener = new TestOnDownloadLisener();
+        final TestCompleteOnDownloadLisener downloadLisener = new TestCompleteOnDownloadLisener();
         DownloadManager.INSTANCE.registerDownloadListener(mContext, downloadLisener);
         DownloadOptions downloadOptions = new DownloadOptionsBuilder()
                 .fileName("test.test")
@@ -84,8 +84,10 @@ public class DownloadPresenterTest {
         final State state = downloadInfo.getState();
         assertEquals(state, State.DOWNLOADING);
         // 等待2秒触发onProgress
-        Thread.sleep(2000);
-        assertTrue(downloadLisener.hasProgress);
+        TestSubscriber<String> testSubscriber = new TestSubscriber<>();
+        downloadLisener.getPublishSubject().subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertCompleted();
         // 移除监听
         DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
     }

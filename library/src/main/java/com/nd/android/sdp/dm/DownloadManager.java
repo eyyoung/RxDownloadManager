@@ -10,6 +10,8 @@ import android.text.TextUtils;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
+import com.nd.android.sdp.dm.processor.DataProcessor;
+import com.nd.android.sdp.dm.processor.DefaultDataProcessor;
 import com.nd.android.sdp.dm.provider.DownloadProvider;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsColumns;
 import com.nd.android.sdp.dm.provider.downloads.DownloadsCursor;
@@ -29,9 +31,18 @@ public enum DownloadManager {
 
     INSTANCE;
 
-    public void init(Context pContext) {
+    private Class<? extends DataProcessor> mDataProcessor;
+
+    public void init(Context context) {
+        init(context, null);
+    }
+
+    public void init(Context pContext, Class<? extends DataProcessor> dataProcessor) {
         DownloadProvider.init(pContext.getApplicationContext());
         DownloadsColumns.CONTENT_URI = Uri.parse(DownloadProvider.CONTENT_URI_BASE + "/" + DownloadsColumns.TABLE_NAME);
+        if (dataProcessor != null) {
+            mDataProcessor = dataProcessor;
+        }
     }
 
     /**
@@ -233,4 +244,10 @@ public enum DownloadManager {
         DownloadService.pauseAll(pContext);
     }
 
+    public DataProcessor getDataProcessor() throws IllegalAccessException, InstantiationException {
+        if (mDataProcessor == null) {
+            return new DefaultDataProcessor();
+        }
+        return mDataProcessor.newInstance();
+    }
 }

@@ -3,6 +3,7 @@ package com.nd.android.sdp.dm.options;
 import android.support.annotation.NonNull;
 
 import com.nd.android.sdp.dm.downloader.Downloader;
+import com.nd.android.sdp.dm.processor.DataProcessor;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -16,7 +17,7 @@ public class DownloadOptions implements Serializable {
 
     private static DefaultConflictStragedy sDefaultConflictStragedy = new DefaultConflictStragedy();
 
-    private static Md5TempFileNameStragedy sDefaultTempFileNameStragedy =new Md5TempFileNameStragedy();
+    private static Md5TempFileNameStragedy sDefaultTempFileNameStragedy = new Md5TempFileNameStragedy();
 
     private HashMap<String, String> mExtraForDownloader;
 
@@ -32,28 +33,36 @@ public class DownloadOptions implements Serializable {
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
 
-    private TempFileNameStragedy mTempFileStragedy =sDefaultTempFileNameStragedy;
+    private TempFileNameStragedy mTempFileStragedy = sDefaultTempFileNameStragedy;
 
     private Class<? extends OpenAction> mOpenAction;
 
     private HashMap<String, String> mUrlParams;
 
+    private DataProcessor mDataProcessor;
+
     DownloadOptions(HashMap<String, String> pExtraForDownloader,
-                           Class<? extends Downloader> pDownloader,
-                           String pFileName,
-                           String pParentDirPath,
-                           String pModuleName,
-                           Class<? extends OpenAction> pOpenAction,
-                           HashMap<String, String> pUrlParams,
-                           boolean pNeedNotificationBar) {
+                    Class<? extends Downloader> pDownloader,
+                    String pFileName,
+                    String pParentDirPath,
+                    String pModuleName,
+                    DataProcessor dataProcessor,
+                    Class<? extends OpenAction> pOpenAction,
+                    HashMap<String, String> pUrlParams,
+                    boolean pNeedNotificationBar) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
         mParentDirPath = pParentDirPath;
         mModuleName = pModuleName;
+        mDataProcessor = dataProcessor;
         mOpenAction = pOpenAction;
         mNeedNotificationBar = pNeedNotificationBar;
         mUrlParams = pUrlParams;
+    }
+
+    public DataProcessor getDataProcessor() {
+        return mDataProcessor;
     }
 
     public HashMap<String, String> getExtraForDownloader() {
@@ -85,7 +94,7 @@ public class DownloadOptions implements Serializable {
     }
 
     @NonNull
-    public HashMap<String,String> getUrlParams() {
+    public HashMap<String, String> getUrlParams() {
         return mUrlParams;
     }
 
@@ -93,7 +102,7 @@ public class DownloadOptions implements Serializable {
         return mConflictStragedy;
     }
 
-    public TempFileNameStragedy getTempFileStragedy(){
+    public TempFileNameStragedy getTempFileStragedy() {
         return mTempFileStragedy;
     }
 }
