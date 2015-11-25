@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -12,6 +13,7 @@ import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
 import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.exception.DownloadHttpException;
+import com.nd.android.sdp.dm.log.DownloaderLogger;
 import com.nd.android.sdp.dm.options.ConflictStragedy;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.TempFileNameStragedy;
@@ -230,16 +232,58 @@ public class DownloadPresenter {
      * @author Young
      */
     private Observable<BaseDownloadInfo> getTaskStream(@NonNull final String pUrl, final String md5, @NonNull final DownloadOptions pDownloadOptions) {
+        int[] hasRetryCount = new int[1];
         return Observable
                 .just(md5)
                 .flatMap(pMd5 -> judgeMd5Exist(pUrl, pMd5, pDownloadOptions))
                 .flatMap(s -> getDownloadInfoStream(pUrl, pDownloadOptions))
-                .retry(judgeRetry())
+//                .retry(judgeRetry())
                 .buffer(1000, TimeUnit.MILLISECONDS)
+                .retryWhen(retry(pUrl, hasRetryCount, pDownloadOptions))
                 .filter(downloadInfoInners -> downloadInfoInners != null && downloadInfoInners.size() > 0)
                 .map(downloadInfoInners -> downloadInfoInners.get(downloadInfoInners.size() - 1))
                 .timeout(DOWNLOAD_TIMEOUT, TimeUnit.SECONDS)
+                .map(logRetrySuccess(pUrl, hasRetryCount, pDownloadOptions))
                 .map(writeStateToDb(pDownloadOptions));
+    }
+
+    @NonNull
+    private Func1<Observable<? extends Throwable>, Observable<?>> retry(String url,
+                                                                        int[] hasRetryCount,
+                                                                        DownloadOptions pDownloadOptions) {
+        return attempts -> attempts.zipWith(Observable.range(1, RETRY_COUNT + 1), Pair::create)
+                .flatMap(
+                        ni -> {
+                            if (ni.second > RETRY_COUNT)
+                                return Observable.error(ni.first);
+                            final DownloaderLogger downloaderLogger = pDownloadOptions.getDownloaderLogger();
+                            if (downloaderLogger != null) {
+                                downloaderLogger.logRetry(getDownloadUrl(url, pDownloadOptions),
+                                        pDownloadOptions.getExtraForDownloader(),
+                                        ni.first,
+                                        ni.second);
+                            }
+                            Log.d("DownloadPresenter", "Download Retry" + ni.second);
+                            hasRetryCount[0] = ni.second;
+                            return Observable.timer(RETRY_TIME_OUT, TimeUnit.MILLISECONDS);
+                        });
+    }
+
+    @NonNull
+    private Func1<BaseDownloadInfo, BaseDownloadInfo> logRetrySuccess(String url, int[] hasRetryCount, DownloadOptions pDownloadOptions) {
+        return baseDownloadInfo -> {
+            if (hasRetryCount[0] > 0) {
+                final DownloaderLogger downloaderLogger = pDownloadOptions.getDownloaderLogger();
+                if (downloaderLogger != null) {
+                    downloaderLogger.logRetrySuccess(getDownloadUrl(url, pDownloadOptions),
+                            pDownloadOptions.getExtraForDownloader(),
+                            hasRetryCount[0]);
+                }
+                Log.d("DownloadPresenter", "Download Retry Success" + hasRetryCount[0]);
+                hasRetryCount[0] = 0;
+            }
+            return baseDownloadInfo;
+        };
     }
 
     @NonNull

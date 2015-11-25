@@ -3,6 +3,7 @@ package com.nd.android.sdp.dm.options;
 import android.support.annotation.NonNull;
 
 import com.nd.android.sdp.dm.downloader.Downloader;
+import com.nd.android.sdp.dm.log.DownloaderLogger;
 import com.nd.android.sdp.dm.processor.DataProcessor;
 
 import java.io.Serializable;
@@ -41,6 +42,8 @@ public class DownloadOptions implements Serializable {
 
     private DataProcessor mDataProcessor;
 
+    private DownloaderLogger mDownloaderLogger;
+
     DownloadOptions(HashMap<String, String> pExtraForDownloader,
                     Class<? extends Downloader> pDownloader,
                     String pFileName,
@@ -49,7 +52,7 @@ public class DownloadOptions implements Serializable {
                     DataProcessor dataProcessor,
                     Class<? extends OpenAction> pOpenAction,
                     HashMap<String, String> pUrlParams,
-                    boolean pNeedNotificationBar) {
+                    boolean pNeedNotificationBar, DownloaderLogger downloaderLogger) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
@@ -59,6 +62,7 @@ public class DownloadOptions implements Serializable {
         mOpenAction = pOpenAction;
         mNeedNotificationBar = pNeedNotificationBar;
         mUrlParams = pUrlParams;
+        mDownloaderLogger = downloaderLogger;
     }
 
     public DataProcessor getDataProcessor() {
@@ -104,5 +108,9 @@ public class DownloadOptions implements Serializable {
 
     public TempFileNameStragedy getTempFileStragedy() {
         return mTempFileStragedy;
+    }
+
+    public DownloaderLogger getDownloaderLogger() {
+        return mDownloaderLogger;
     }
 }

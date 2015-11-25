@@ -316,7 +316,8 @@ public class DownloadPresenterTest {
             testSubscriber.awaitTerminalEvent();
             testSubscriber.assertNoErrors();
             // 没下载
-            testSubscriber.assertNoValues();
+            // 会通知已经下载完了
+            testSubscriber.assertValueCount(1);
             // 确保下载完成
             testSubscriber.assertCompleted();
             DownloadManager.INSTANCE.unregisterDownloadListener(downloadLisener);
