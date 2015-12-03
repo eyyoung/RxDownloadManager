@@ -90,6 +90,9 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            return START_NOT_STICKY;
+        }
         String url = intent.getStringExtra(PARAM_URL);
         OPER oper = (OPER) intent.getSerializableExtra(PARAM_OPER);
         if (oper == null) {

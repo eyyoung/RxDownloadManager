@@ -134,19 +134,23 @@ public class DownloadPresenter {
             // 已经在做，不做
             return false;
         }
-        if (checkExists(pUrl)) {
+        final File file = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
+        final String filePath = file.getAbsolutePath();
+        final String existPath = checkExists(pUrl);
+        if (!TextUtils.isEmpty(existPath)) {
+            // 插入一次数据库通知出去
             insertOrUpdate(pUrl,
-                    new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName()).getAbsolutePath(),
+                    existPath,
                     md5,
                     pDownloadOptions.getModuleName(),
                     State.FINISHED,
-                    0,
-                    0);
+                    file.length(),
+                    file.length());
             return false;
         }
         // 添加任务
         insertOrUpdate(pUrl,
-                new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName()).getAbsolutePath(),
+                filePath,
                 md5,
                 pDownloadOptions.getModuleName(),
                 State.DOWNLOADING,
@@ -204,7 +208,7 @@ public class DownloadPresenter {
      *
      * @param pUrl url
      */
-    private boolean checkExists(@NonNull String pUrl) {
+    private String checkExists(@NonNull String pUrl) {
         final DownloadsCursor query = query(pUrl);
         try {
             final int count = query.getCount();
@@ -215,12 +219,15 @@ public class DownloadPresenter {
                 // 如果是暂停状态和取消状态，认为不存在，重新下载
                 // 综上，只有在任务已经完成的情况下，才不需要执行下载操作
                 // 需加上判断文件是否存在
-                if (query.getState() == State.FINISHED.getValue()
-                        && new File(query.getFilepath()).exists()) {
-                    return true;
+                final String filepath = query.getFilepath();
+                if (query.getState() != null
+                        && query.getState() == State.FINISHED.getValue()
+                        && filepath != null
+                        && new File(filepath).exists()) {
+                    return filepath;
                 }
             }
-            return false;
+            return null;
         } finally {
             query.close();
         }
@@ -282,6 +289,7 @@ public class DownloadPresenter {
                 Log.d("DownloadPresenter", "Download Retry Success" + hasRetryCount[0]);
                 hasRetryCount[0] = 0;
             }
+            Log.d("DownloadPresenter", "System.currentTimeMillis():" + System.currentTimeMillis());
             return baseDownloadInfo;
         };
     }
