@@ -148,13 +148,19 @@ public class DownloadPresenter {
                     file.length());
             return false;
         }
+
+        final File tempFile = getTempFile(pDownloadOptions, pUrl);
+        long currentSize = 0;
+        if (tempFile.exists()) {
+            currentSize = tempFile.length();
+        }
         // 添加任务
         insertOrUpdate(pUrl,
                 filePath,
                 md5,
                 pDownloadOptions.getModuleName(),
                 State.DOWNLOADING,
-                0,
+                currentSize,
                 0);
         final Subscription subscription = getTaskStream(pUrl, md5, pDownloadOptions)
                 .subscribeOn(Schedulers.io())
@@ -401,11 +407,9 @@ public class DownloadPresenter {
             public void call(final Subscriber<? super BaseDownloadInfo> pSubscriber) {
                 // 先拼出假的，最终重命名会判重处理
                 File downloadFile = new File(pDownloadOptions.getParentDirPath(), pDownloadOptions.getFileName());
-                final TempFileNameStragedy tempFileNameStragedy = pDownloadOptions.getTempFileStragedy();
-                String tmpKeyName = tempFileNameStragedy.getTempFileName(pUrl);
+                final File tmpFile = getTempFile(pDownloadOptions, pUrl);
                 // 拼凑真实下载路径
                 String downloadUrl = getDownloadUrl(pUrl, pDownloadOptions);
-                final File tmpFile = new File(pDownloadOptions.getParentDirPath(), tmpKeyName);
                 try {
                     DataProcessor processor = pDownloadOptions.getDataProcessor();
                     if (processor == null) {
@@ -481,6 +485,13 @@ public class DownloadPresenter {
                 }
             }
         });
+    }
+
+    @NonNull
+    private File getTempFile(@NonNull DownloadOptions pDownloadOptions, @NonNull String pUrl) {
+        final TempFileNameStragedy tempFileNameStragedy = pDownloadOptions.getTempFileStragedy();
+        String tmpKeyName = tempFileNameStragedy.getTempFileName(pUrl);
+        return new File(pDownloadOptions.getParentDirPath(), tmpKeyName);
     }
 
     /**
