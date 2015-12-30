@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="downloadmanager_downloading">%s ดาวโหลดอยู่</string>
+    <string name="downloadmanager_cancel">ยกเลิก</string>
+    <string name="downloadmanager_pause">หยุดชั่วคราว</string>
+    <string name="downloadmanager_download_complete_title">%sดาวโหลดสมบูรณ์</string>
+    <string name="downloadmanager_download_complete_content">เก็บถึง %s</string>
+    <string name="downloadmanager_download_failed_title">%s ล้มเหลวการดาวโหลด</string>
+    <string name="downloadmanager_download_failed_content">%sล้มเหลวการดาวโหลด, กรุณาตรวจเครือข่าย</string>
+
+</resources>
