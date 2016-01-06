@@ -1,12 +1,13 @@
 package com.nd.android.sdp.dm.log;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * 日志记录器
  */
-public interface DownloaderLogger {
+public interface DownloaderLogger extends Serializable{
 
     /**
      * 记录重试次数与重试信息

@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.R;
@@ -160,27 +161,31 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
     }
 
     private void makeProgressNotification(String pFileName, String pUrl) {
-        Intent cancelIntent = new Intent(this, DownloadService.class);
-        cancelIntent.putExtra(PARAM_URL, pUrl);
-        cancelIntent.putExtra(PARAM_OPER, OPER.CANCEL);
-        PendingIntent piCancel = PendingIntent.getService(this, 0, cancelIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        Intent pauseIntent = new Intent(this, DownloadService.class);
-        pauseIntent.putExtra(PARAM_URL, pUrl);
-        pauseIntent.putExtra(PARAM_OPER, OPER.PAUSE);
-        PendingIntent piPause = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(android.R.drawable.stat_sys_download)
-                        .setContentTitle(getString(R.string.downloadmanager_downloading, pFileName))
-                        .setProgress(100, 0, true)
-                        .addAction(R.drawable.downloadmanager_ic_block,
-                                getString(R.string.downloadmanager_cancel), piCancel)
-                        .setOngoing(true)
-                        .addAction(R.drawable.downloadmanager_ic_pause,
-                                getString(R.string.downloadmanager_pause), piPause);
-        Notification notification = builder.build();
-        mNotifyManager.notify(Math.abs(pUrl.hashCode()), notification);
-        mNotificationHashMap.put(pUrl, builder);
+        try {
+            Intent cancelIntent = new Intent(this, DownloadService.class);
+            cancelIntent.putExtra(PARAM_URL, pUrl);
+            cancelIntent.putExtra(PARAM_OPER, OPER.CANCEL);
+            PendingIntent piCancel = PendingIntent.getService(this, 0, cancelIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            Intent pauseIntent = new Intent(this, DownloadService.class);
+            pauseIntent.putExtra(PARAM_URL, pUrl);
+            pauseIntent.putExtra(PARAM_OPER, OPER.PAUSE);
+            PendingIntent piPause = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(android.R.drawable.stat_sys_download)
+                            .setContentTitle(getString(R.string.downloadmanager_downloading, pFileName))
+                            .setProgress(100, 0, true)
+                            .addAction(R.drawable.downloadmanager_ic_block,
+                                    getString(R.string.downloadmanager_cancel), piCancel)
+                            .setOngoing(true)
+                            .addAction(R.drawable.downloadmanager_ic_pause,
+                                    getString(R.string.downloadmanager_pause), piPause);
+            Notification notification = builder.build();
+            mNotifyManager.notify(Math.abs(pUrl.hashCode()), notification);
+            mNotificationHashMap.put(pUrl, builder);
+        } catch (Exception e) {
+            Log.w(getClass().getName(), "Notify Error");
+        }
     }
 
     public static void cancel(@NonNull Context pContext, @NonNull String pUrl) {

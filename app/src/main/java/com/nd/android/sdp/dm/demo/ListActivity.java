@@ -16,12 +16,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.nd.android.sdp.dm.DownloadManager;
+import com.nd.android.sdp.dm.log.DownloaderLogger;
 import com.nd.android.sdp.dm.observer.DownloadObserver;
 import com.nd.android.sdp.dm.options.DownloadOptions;
 import com.nd.android.sdp.dm.options.DownloadOptionsBuilder;
 import com.nd.android.sdp.dm.pojo.BaseDownloadInfo;
 import com.nd.android.sdp.dm.pojo.IDownloadInfo;
 import com.nd.android.sdp.dm.state.State;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ListActivity extends AppCompatActivity implements DownloadObserver.OnDownloadLisener {
 
@@ -95,7 +99,8 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
                 "http://down.360safe.com/360ap/360freeap_whole_setup_5.3.0.3010.exe",
                 "http://betacs.101.com/v0.1/download?dentryId=5f5e5491-b5be-4c28-bc5f-d13145cb526e",
                 "http://betacs.101.com/v0.1/download?dentryId=60d34463-af82-4292-8f78-aa59e4d6e431&session=cc76fc38-d59b-41fb-82ca-07086cd06349",
-                "http://betacs.101.com/v0.1/download?dentryId=9333a7c1-af75-47e3-b088-90448f647e8a&session=a8e6e248-b9f8-4aea-8b11-3b3d7fe15e49"
+                "http://betacs.101.com/v0.1/download?dentryId=9333a7c1-af75-47e3-b088-90448f647e8a&session=a8e6e248-b9f8-4aea-8b11-3b3d7fe15e49",
+                "http://www.texts.io/Texts-0.203.5.msi"
         };
 
         @Override
@@ -139,6 +144,7 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
                             .fileName("file.txt")
                             .needNotificationBar(true)
                             .parentDirPath("/sdcard/test/")
+                            .downloadLogger(new DownloadTestLogger())
                             .build();
                     DownloadManager.INSTANCE.start(ListActivity.this, downloadUrls[index], downloadOptions);
                 } else {
@@ -155,6 +161,19 @@ public class ListActivity extends AppCompatActivity implements DownloadObserver.
     public static void start(Context context) {
         Intent starter = new Intent(context, ListActivity.class);
         context.startActivity(starter);
+    }
+
+    private static class DownloadTestLogger implements DownloaderLogger {
+
+        @Override
+        public void logRetry(String url, Map<String, String> headerMap, Throwable throwable, int retryCount) {
+            throwable.printStackTrace();
+        }
+
+        @Override
+        public void logRetrySuccess(String downloadUrl, HashMap<String, String> extraForDownloader, int retryCount) {
+
+        }
     }
 
 
