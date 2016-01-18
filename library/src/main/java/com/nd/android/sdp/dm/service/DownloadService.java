@@ -128,17 +128,15 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
                 }
                 cancelNotify(url);
                 final Serializable actionExtra = intent.getSerializableExtra(PARAM_OPEN_ACTION);
-                if (actionExtra != null && actionExtra instanceof OpenAction) {
-                    final Class<? extends OpenAction> openActionClass = (Class<? extends OpenAction>) actionExtra;
+                if (actionExtra != null) {
                     try {
+                        final Class<? extends OpenAction> openActionClass = (Class<? extends OpenAction>) actionExtra;
                         final OpenAction openAction = openActionClass.newInstance();
                         final DownloadsCursor query = mDownloadPresenter.query(url);
                         query.moveToFirst();
                         openAction.open(this, query.getFilepath());
                         query.close();
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -268,11 +266,17 @@ public class DownloadService extends Service implements DownloadObserver.OnDownl
 
     @Override
     public void onError(String pUrl, int httpState) {
+        if (!mNotificationHashMap.containsKey(pUrl)) {
+            return;
+        }
         final DownloadsCursor query = mDownloadPresenter.query(pUrl);
         if (query == null || query.getCount() == 0) {
             return;
         }
         query.moveToFirst();
+        if (query.getFilepath() == null) {
+            return;
+        }
         File file = new File(query.getFilepath());
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)

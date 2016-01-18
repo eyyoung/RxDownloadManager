@@ -39,10 +39,15 @@ public class DefaultConflictStragedy implements ConflictStragedy {
             stringBuilder.replace(lastIndexStart, lastIndexEnd, "(" + (Integer.parseInt(num) + 1) + ")");
         } else {
             int lastIndexOf = origPath.lastIndexOf(".");
-            if (lastIndexOf >= 0) {
-                stringBuilder.replace(lastIndexOf, lastIndexOf + 1, "(1).");
-            } else {
+            // 没有后缀
+            if (origPath.lastIndexOf("/")>=lastIndexOf) {
                 stringBuilder.append("(1)");
+            }else {
+                if (lastIndexOf >= 0) {
+                    stringBuilder.replace(lastIndexOf, lastIndexOf + 1, "(1).");
+                } else {
+                    stringBuilder.append("(1)");
+                }
             }
         }
         return stringBuilder.toString();

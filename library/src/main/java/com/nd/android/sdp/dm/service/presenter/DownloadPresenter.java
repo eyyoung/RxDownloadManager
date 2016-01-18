@@ -7,7 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.nd.android.sdp.dm.DownloadManager;
 import com.nd.android.sdp.dm.downloader.BaseDownloader;
@@ -276,7 +275,6 @@ public class DownloadPresenter {
                                         ni.first,
                                         ni.second);
                             }
-                            Log.d("DownloadPresenter", "Download Retry" + ni.second);
                             hasRetryCount[0] = ni.second;
                             return Observable.timer(RETRY_TIME_OUT, TimeUnit.MILLISECONDS);
                         });
@@ -292,10 +290,8 @@ public class DownloadPresenter {
                             pDownloadOptions.getExtraForDownloader(),
                             hasRetryCount[0]);
                 }
-                Log.d("DownloadPresenter", "Download Retry Success" + hasRetryCount[0]);
                 hasRetryCount[0] = 0;
             }
-            Log.d("DownloadPresenter", "System.currentTimeMillis():" + System.currentTimeMillis());
             return baseDownloadInfo;
         };
     }
@@ -436,9 +432,17 @@ public class DownloadPresenter {
                                     return pSubscriber.isUnsubscribed();
                                 }
                             });
-                    // 真实判重冲突重命名处理
-                    ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
-                    File realDownloadFile = conflictStragedy.getRepeatFileName(downloadFile);
+                    File realDownloadFile;
+                    if (pDownloadOptions.isForceOverride()) {
+                        realDownloadFile = downloadFile;
+                        if (realDownloadFile.exists()) {
+                            realDownloadFile.delete();
+                        }
+                    } else {
+                        // 真实判重冲突重命名处理
+                        ConflictStragedy conflictStragedy = pDownloadOptions.getConflictStragedy();
+                        realDownloadFile = conflictStragedy.getRepeatFileName(downloadFile);
+                    }
                     final String filePath = realDownloadFile.getAbsolutePath();
                     if (loaded && tmpFile.renameTo(realDownloadFile)) {
                         String fileMd5 = null;
@@ -522,7 +526,6 @@ public class DownloadPresenter {
         final Subscription subscription = mUriSubscriptionMap.get(pUrl);
         if (mUriSubscriptionMap.containsKey(pUrl) && !subscription.isUnsubscribed()) {
             subscription.unsubscribe();
-            Log.d("DownloadPresenter", "pause");
         }
         final DownloadsCursor query = query(pUrl);
         query.moveToFirst();

@@ -13,10 +13,12 @@ public class DownloadOptionsBuilder {
     private String mModuleName = "sdp_common";
     private boolean mNeedNotificationBar = false;
     private String mFileName;
+    private boolean mForceOverride;
     private Class<? extends OpenAction> mOpenAction;
     private DataProcessor mDataProcessor;
     private HashMap<String, String> mUrlParams = new HashMap<>();
     private DownloaderLogger mDownloaderLogger;
+    private TempFileNameStragedy mTempFileNameStragedy;
 
     /**
      * 下载头
@@ -126,6 +128,21 @@ public class DownloadOptionsBuilder {
         return this;
     }
 
+    /**
+     * 强制覆盖
+     *
+     * @param force
+     */
+    public DownloadOptionsBuilder forceOverride(boolean force) {
+        mForceOverride = force;
+        return this;
+    }
+
+    public DownloadOptionsBuilder tempFileNameStragedy(TempFileNameStragedy tempFileNameStragedy) {
+        mTempFileNameStragedy = tempFileNameStragedy;
+        return this;
+    }
+
     public DownloadOptions build() {
         return new DownloadOptions(mExtraForDownloader,
                 mDownloader,
@@ -135,7 +152,9 @@ public class DownloadOptionsBuilder {
                 mDataProcessor,
                 mOpenAction,
                 mUrlParams,
+                mForceOverride,
                 mNeedNotificationBar,
+                mTempFileNameStragedy,
                 mDownloaderLogger);
     }
 }

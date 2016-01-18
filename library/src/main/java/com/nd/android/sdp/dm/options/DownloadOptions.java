@@ -1,6 +1,7 @@
 package com.nd.android.sdp.dm.options;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.nd.android.sdp.dm.downloader.Downloader;
 import com.nd.android.sdp.dm.log.DownloaderLogger;
@@ -30,11 +31,13 @@ public class DownloadOptions implements Serializable {
 
     private String mModuleName;
 
+    private final boolean mForceOverride;
     private boolean mNeedNotificationBar;
 
     private ConflictStragedy mConflictStragedy = sDefaultConflictStragedy;
 
-    private TempFileNameStragedy mTempFileStragedy = sDefaultTempFileNameStragedy;
+    @NonNull
+    private final TempFileNameStragedy mTempFileStragedy;
 
     private Class<? extends OpenAction> mOpenAction;
 
@@ -52,7 +55,11 @@ public class DownloadOptions implements Serializable {
                     DataProcessor dataProcessor,
                     Class<? extends OpenAction> pOpenAction,
                     HashMap<String, String> pUrlParams,
-                    boolean pNeedNotificationBar, DownloaderLogger downloaderLogger) {
+                    boolean forceOverride,
+                    boolean pNeedNotificationBar,
+                    @Nullable
+                    TempFileNameStragedy tempFileNameStragedy,
+                    DownloaderLogger downloaderLogger) {
         mExtraForDownloader = pExtraForDownloader;
         mDownloader = pDownloader;
         mFileName = pFileName;
@@ -60,9 +67,15 @@ public class DownloadOptions implements Serializable {
         mModuleName = pModuleName;
         mDataProcessor = dataProcessor;
         mOpenAction = pOpenAction;
+        mForceOverride = forceOverride;
         mNeedNotificationBar = pNeedNotificationBar;
         mUrlParams = pUrlParams;
         mDownloaderLogger = downloaderLogger;
+        if (tempFileNameStragedy != null) {
+            mTempFileStragedy = tempFileNameStragedy;
+        } else {
+            mTempFileStragedy = sDefaultTempFileNameStragedy;
+        }
     }
 
     public DataProcessor getDataProcessor() {
@@ -106,8 +119,13 @@ public class DownloadOptions implements Serializable {
         return mConflictStragedy;
     }
 
+    @NonNull
     public TempFileNameStragedy getTempFileStragedy() {
         return mTempFileStragedy;
+    }
+
+    public boolean isForceOverride() {
+        return mForceOverride;
     }
 
     public DownloaderLogger getDownloaderLogger() {
