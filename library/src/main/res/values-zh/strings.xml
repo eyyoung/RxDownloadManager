@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="downloadmanager_downloading">正在下载%s...</string>
+    <string name="downloadmanager_downloading">正在下载%s…</string>
     <string name="downloadmanager_cancel">取消</string>
     <string name="downloadmanager_pause">暂停</string>
     <string name="downloadmanager_download_complete_title">%s下载完成</string>

@@ -31,8 +31,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public String getUrl() {
-        String res = getStringOrNull(DownloadsColumns.URL);
-        return res;
+        return getStringOrNull(DownloadsColumns.URL);
     }
 
     /**
@@ -41,8 +40,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public String getFilepath() {
-        String res = getStringOrNull(DownloadsColumns.FILEPATH);
-        return res;
+        return getStringOrNull(DownloadsColumns.FILEPATH);
     }
 
     /**
@@ -51,8 +49,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public String getMd5() {
-        String res = getStringOrNull(DownloadsColumns.MD5);
-        return res;
+        return getStringOrNull(DownloadsColumns.MD5);
     }
 
     /**
@@ -61,14 +58,12 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public Integer getState() {
-        Integer res = getIntegerOrNull(DownloadsColumns.STATE);
-        return res;
+        return getIntegerOrNull(DownloadsColumns.STATE);
     }
 
     @Nullable
     public Integer getHttpState() {
-        Integer res = getIntegerOrNull(DownloadsColumns.HTTP_STATE);
-        return res;
+        return getIntegerOrNull(DownloadsColumns.HTTP_STATE);
     }
 
     /**
@@ -77,8 +72,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public String getModuleName() {
-        String res = getStringOrNull(DownloadsColumns.MODULE_NAME);
-        return res;
+        return getStringOrNull(DownloadsColumns.MODULE_NAME);
     }
 
     /**
@@ -87,8 +81,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public Long getCurrentSize() {
-        Long res = getLongOrNull(DownloadsColumns.CURRENT_SIZE);
-        return res;
+        return getLongOrNull(DownloadsColumns.CURRENT_SIZE);
     }
 
     /**
@@ -97,8 +90,7 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public Long getTotalSize() {
-        Long res = getLongOrNull(DownloadsColumns.TOTAL_SIZE);
-        return res;
+        return getLongOrNull(DownloadsColumns.TOTAL_SIZE);
     }
 
     /**
@@ -107,7 +99,6 @@ public class DownloadsCursor extends AbstractCursor implements DownloadsModel {
      */
     @Nullable
     public Date getCreateTime() {
-        Date res = getDateOrNull(DownloadsColumns.CREATE_TIME);
-        return res;
+        return getDateOrNull(DownloadsColumns.CREATE_TIME);
     }
 }

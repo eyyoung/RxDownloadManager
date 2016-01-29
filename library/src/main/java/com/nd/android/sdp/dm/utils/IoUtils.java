@@ -122,7 +122,7 @@ public final class IoUtils {
     /**
      * Listener and controller for copy process
      */
-    public static interface CopyListener {
+    public interface CopyListener {
         /**
          * @param current Loaded bytes
          * @param total   Total bytes for loading

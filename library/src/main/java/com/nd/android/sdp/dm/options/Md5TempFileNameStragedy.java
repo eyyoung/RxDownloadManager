@@ -31,6 +31,7 @@ public class Md5TempFileNameStragedy implements TempFileNameStragedy, Serializab
             e.update(data);
             hash = e.digest();
         } catch (NoSuchAlgorithmException var4) {
+            var4.printStackTrace();
         }
 
         return hash;

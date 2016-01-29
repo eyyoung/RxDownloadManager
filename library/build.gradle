@@ -62,5 +62,6 @@ uploadArchives {
             }
         }
     } catch (java.lang.Exception e) {
+        e.printStackTrace()
     }
 }

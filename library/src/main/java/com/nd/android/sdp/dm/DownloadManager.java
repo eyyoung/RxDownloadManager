@@ -25,7 +25,6 @@ import java.io.File;
  * The Download manager.
  *
  * @author Young
- * @date $date
  */
 public enum DownloadManager {
 
@@ -51,7 +50,6 @@ public enum DownloadManager {
      * @param pContext         the context
      * @param url              the url
      * @param pDownloadOptions the download options
-     * @author Young
      */
     public void start(Context pContext, String url, DownloadOptions pDownloadOptions) {
         start(pContext, url, null, pDownloadOptions);
@@ -63,8 +61,7 @@ public enum DownloadManager {
      * @param pContext         the context
      * @param url              the url
      * @param pDownloadOptions the download options
-     * @param pMd5
-     * @author Young
+     * @param pMd5             md5
      */
     public void start(@NonNull Context pContext,
                       @NonNull String url,
@@ -74,9 +71,6 @@ public enum DownloadManager {
         if (TextUtils.isEmpty(url)) {
             return;
         }
-        if (pDownloadOptions == null) {
-            return;
-        }
         DownloadService.start(pContext, url, pMd5, pDownloadOptions);
     }
 
@@ -84,15 +78,8 @@ public enum DownloadManager {
      * 注册下载监听
      *
      * @param pLisener the lisener
-     * @author Young
      */
     public void registerDownloadListener(@NonNull Context pContext, @NonNull DownloadObserver.OnDownloadLisener pLisener) {
-        if (pContext == null) {
-            throw new IllegalArgumentException();
-        }
-        if (pLisener == null) {
-            throw new IllegalArgumentException();
-        }
         DownloadObserver.INSTANCE.init(pContext.getApplicationContext().getContentResolver());
         DownloadObserver.INSTANCE.registerProgressListener(pLisener);
     }
@@ -101,7 +88,6 @@ public enum DownloadManager {
      * 反注册观察者
      *
      * @param pLisener the lisener
-     * @author Young
      */
     public void unregisterDownloadListener(@NonNull DownloadObserver.OnDownloadLisener pLisener) {
         DownloadObserver.INSTANCE.unregisterProgressListener(pLisener);
@@ -111,7 +97,6 @@ public enum DownloadManager {
      * 取消下载
      *
      * @param url the url
-     * @author Young
      */
     public void cancel(@NonNull Context pContext, @NonNull String url) {
         if (TextUtils.isEmpty(url)) {
@@ -124,7 +109,6 @@ public enum DownloadManager {
      * 暂停下载
      *
      * @param url the url
-     * @author Young
      */
     public void pause(@NonNull Context pContext, @NonNull String url) {
         if (TextUtils.isEmpty(url)) {
@@ -149,7 +133,9 @@ public enum DownloadManager {
         if (cursor.getCount() != 0) {
             // 将该任务直接索引到旧任务的相同文件路径
             cursor.moveToFirst();
-            if (cursor.getCurrentSize().equals(cursor.getTotalSize())) {
+            final Long currentSize = cursor.getCurrentSize();
+            final Long totalSize = cursor.getTotalSize();
+            if (currentSize != null && currentSize.equals(totalSize)) {
                 // 判断文件是否存在
                 String filepath = cursor.getFilepath();
                 if (!TextUtils.isEmpty(filepath)) {
@@ -166,9 +152,9 @@ public enum DownloadManager {
     /**
      * 根据URL获取下载信息
      *
-     * @param pContext
-     * @param url
-     * @return
+     * @param pContext context
+     * @param url      url
+     * @return 下载信息列表
      */
     @NonNull
     public ArrayMap<String, IDownloadInfo> getDownloadInfos(@NonNull Context pContext,
@@ -183,13 +169,7 @@ public enum DownloadManager {
             return downloadInfos;
         }
         while (cursor.moveToNext()) {
-            IDownloadInfo downloadInfo = pClass.newInstance();
-            downloadInfo.setCurrentSize(cursor.getCurrentSize());
-            downloadInfo.setTotalSize(cursor.getTotalSize());
-            downloadInfo.setFilePath(cursor.getFilepath());
-            downloadInfo.setMd5(cursor.getMd5());
-            downloadInfo.setState(State.fromInt(cursor.getState()));
-            downloadInfo.setUrl(cursor.getUrl());
+            IDownloadInfo downloadInfo = cursorToDownloadInfo(pClass, cursor);
             downloadInfos.put(cursor.getUrl(), downloadInfo);
         }
         cursor.close();
@@ -200,12 +180,13 @@ public enum DownloadManager {
      * 获取某个Url的下载信息
      *
      * @param pContext context
-     * @param pClass
-     * @param url
+     * @param pClass   pClass
+     * @param url      url
      * @return the download info
      * @throws IllegalAccessException the illegal access exception
      * @throws InstantiationException the instantiation exception
      */
+    @Nullable
     public IDownloadInfo getDownloadInfo(@NonNull Context pContext,
                                          @NonNull Class<? extends IDownloadInfo> pClass,
                                          @NonNull String url) throws IllegalAccessException, InstantiationException {
@@ -215,22 +196,50 @@ public enum DownloadManager {
         DownloadsSelection downloadsSelection = new DownloadsSelection();
         downloadsSelection.urlContains(url);
         downloadsSelection.orderById(true);
-        IDownloadInfo downloadInfo = pClass.newInstance();
         final DownloadsCursor cursor = downloadsSelection.query(pContext, DownloadsColumns.ALL_COLUMNS);
+        if (cursor == null) {
+            return null;
+        }
         if (cursor.getCount() == 0) {
-            return downloadInfo;
+            return null;
         }
         cursor.moveToFirst();
-        downloadInfo.setCurrentSize(cursor.getCurrentSize());
-        downloadInfo.setTotalSize(cursor.getTotalSize());
+        IDownloadInfo downloadInfo = cursorToDownloadInfo(pClass, cursor);
+        cursor.close();
+        return downloadInfo;
+    }
+
+    @NonNull
+    private IDownloadInfo cursorToDownloadInfo(@NonNull Class<? extends IDownloadInfo> pClass,
+                                               @NonNull DownloadsCursor cursor) throws InstantiationException, IllegalAccessException {
+        IDownloadInfo downloadInfo = pClass.newInstance();
+        final Long currentSize = cursor.getCurrentSize();
+        if (currentSize != null) {
+            downloadInfo.setCurrentSize(currentSize);
+        }
+        final Long totalSize = cursor.getTotalSize();
+        if (totalSize != null) {
+            downloadInfo.setTotalSize(totalSize);
+        }
         downloadInfo.setFilePath(cursor.getFilepath());
         if (cursor.getHttpState() != null) {
             downloadInfo.setHttpState(cursor.getHttpState());
         }
         downloadInfo.setMd5(cursor.getMd5());
-        downloadInfo.setState(State.fromInt(cursor.getState()));
+        final Integer state = cursor.getState();
+        if (state != null) {
+            State state1 = State.fromInt(state);
+            final String filePath = downloadInfo.getFilePath();
+            if (state1 == State.FINISHED
+                    && filePath != null
+                    && !new File(filePath).exists()) {
+                state1 = State.CANCEL;
+            }
+            downloadInfo.setState(state1);
+        } else {
+            downloadInfo.setState(State.CANCEL);
+        }
         downloadInfo.setUrl(cursor.getUrl());
-        cursor.close();
         return downloadInfo;
     }
 
@@ -238,7 +247,6 @@ public enum DownloadManager {
      * Pause all.
      *
      * @param pContext the p context
-     * @author Young
      */
     public void pauseAll(@NonNull Context pContext) {
         DownloadService.pauseAll(pContext);

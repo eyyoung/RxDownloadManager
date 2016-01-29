@@ -12,7 +12,7 @@ import java.io.InputStream;
 import static junit.framework.Assert.assertTrue;
 
 /**
- * Created by Administrator on 2015/9/15.
+ * The type Base downloader test.
  */
 public class BaseDownloaderTest {
 

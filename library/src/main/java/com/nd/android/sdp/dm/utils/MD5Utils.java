@@ -32,8 +32,8 @@ public class MD5Utils {
 
     private static String convertHashToString(byte[] md5Bytes) {
         String returnVal = "";
-        for (int i = 0; i < md5Bytes.length; i++) {
-            returnVal += Integer.toString((md5Bytes[i] & 0xff) + 0x100, 16).substring(1);
+        for (byte md5Byte : md5Bytes) {
+            returnVal += Integer.toString((md5Byte & 0xff) + 0x100, 16).substring(1);
         }
         return returnVal.toLowerCase();
     }

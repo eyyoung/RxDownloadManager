@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="downloadmanager_downloading">%s Downloading...</string>
+    <string name="downloadmanager_downloading">%s Downloading…</string>
     <string name="downloadmanager_cancel">Cancel</string>
     <string name="downloadmanager_pause">Pause</string>
     <string name="downloadmanager_download_complete_title">%sDownload Complete</string>

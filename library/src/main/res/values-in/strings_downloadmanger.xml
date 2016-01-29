@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="downloadmanager_downloading">Mengunduh%s...</string>
+    <string name="downloadmanager_downloading">Mengunduh%s…</string>
     <string name="downloadmanager_cancel">Batal</string>
     <string name="downloadmanager_pause">Tahan</string>
     <string name="downloadmanager_download_complete_title">%s Selesai mengunduh</string>
